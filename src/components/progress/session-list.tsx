@@ -77,9 +77,7 @@ export function SessionList({ sessions, onSessionClick }: SessionListProps) {
     return (
       <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+          <span className="material-symbols-outlined text-3xl">schedule</span>
         </div>
         <h3 className="mb-2 text-lg font-semibold">Aucune session</h3>
         <p className="max-w-sm text-center text-muted-foreground">

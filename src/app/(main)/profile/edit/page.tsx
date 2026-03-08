@@ -280,83 +280,71 @@ export default function EditProfilePage() {
     );
   }
 
+  const tabs: { value: Tab; label: string }[] = [
+    { value: "profile", label: "Profil" },
+    { value: "favorites", label: "Favoris" },
+    { value: "privacy", label: "Confidentialité" },
+    { value: "integrations", label: "Intégrations" },
+    { value: "subscription", label: "Abonnement" },
+  ];
+
   return (
     <div className="mx-auto max-w-4xl p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Éditer le profil</h1>
-        <p className="text-muted-foreground">Personnalise ton profil et choisis tes favoris</p>
+      {/* Header with centered avatar */}
+      <div className="mb-8 flex flex-col items-center text-center">
+        <div className="relative mb-4">
+          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-3xl font-bold text-primary ring-4 ring-background">
+            {avatarPreview || profile.avatar_url ? (
+              <img
+                src={avatarPreview || profile.avatar_url || ""}
+                alt="Avatar"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              profile.display_name?.[0]?.toUpperCase() || profile.username[0].toUpperCase()
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-colors hover:opacity-90 disabled:opacity-50"
+          >
+            {uploadingAvatar ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            ) : (
+              <span className="material-symbols-outlined text-[16px]">photo_camera</span>
+            )}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            className="hidden"
+          />
+        </div>
+        <h2 className="text-xl font-bold">{profile.display_name || profile.username}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Guitariste {profile.plan !== "free" ? `• Ostinara ${profile.plan.charAt(0).toUpperCase() + profile.plan.slice(1)}` : "amateur"}
+        </p>
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 border-b border-border">
-        <div className="flex gap-4">
+      <div className="mb-8 flex gap-6 overflow-x-auto border-b border-border [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {tabs.map((tab) => (
           <button
-            onClick={() => setActiveTab("profile")}
-            className={`relative pb-3 text-sm font-medium transition-colors ${
-              activeTab === "profile"
-                ? "text-primary"
-                : "text-muted-foreground hover:text-foreground"
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value)}
+            className={`whitespace-nowrap border-b-2 pb-3 text-sm font-medium transition-colors ${
+              activeTab === tab.value
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            Profil
-            {activeTab === "profile" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
+            {tab.label}
           </button>
-          <button
-            onClick={() => setActiveTab("favorites")}
-            className={`relative pb-3 text-sm font-medium transition-colors ${
-              activeTab === "favorites"
-                ? "text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Favoris
-            {activeTab === "favorites" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("privacy")}
-            className={`relative pb-3 text-sm font-medium transition-colors ${
-              activeTab === "privacy"
-                ? "text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Confidentialité
-            {activeTab === "privacy" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("integrations")}
-            className={`relative pb-3 text-sm font-medium transition-colors ${
-              activeTab === "integrations"
-                ? "text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Intégrations
-            {activeTab === "integrations" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("subscription")}
-            className={`relative pb-3 text-sm font-medium transition-colors ${
-              activeTab === "subscription"
-                ? "text-primary"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Abonnement
-            {activeTab === "subscription" && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
-          </button>
-        </div>
+        ))}
       </div>
 
       {/* Tab Content */}
@@ -364,49 +352,6 @@ export default function EditProfilePage() {
         {/* Tab Profil */}
         {activeTab === "profile" && (
           <div className="space-y-6">
-            {/* Avatar */}
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-3xl font-bold text-primary">
-                  {avatarPreview || profile.avatar_url ? (
-                    <img
-                      src={avatarPreview || profile.avatar_url || ""}
-                      alt="Avatar"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    profile.display_name?.[0]?.toUpperCase() || profile.username[0].toUpperCase()
-                  )}
-                </div>
-                {uploadingAvatar && (
-                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-background/80">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <h3 className="mb-1 font-medium">Photo de profil</h3>
-                <p className="mb-3 text-sm text-muted-foreground">
-                  JPG, PNG ou GIF. Max 2MB.
-                </p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingAvatar}
-                  className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-50"
-                >
-                  {uploadingAvatar ? "Upload..." : "Changer la photo"}
-                </button>
-              </div>
-            </div>
-
             <div className="space-y-2">
               <label className="text-sm font-medium">Nom d&apos;affichage</label>
               <input
@@ -414,7 +359,7 @@ export default function EditProfilePage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Ton nom d'affichage"
-                className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-surface-lighter/50 dark:backdrop-blur-sm"
               />
             </div>
 
@@ -431,7 +376,7 @@ export default function EditProfilePage() {
                 maxLength={160}
                 placeholder="Parle-nous de toi..."
                 rows={3}
-                className="w-full resize-none rounded-lg border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-surface-lighter/50 dark:backdrop-blur-sm"
               />
               <p className="text-xs text-muted-foreground">
                 Max 160 caractères
@@ -453,7 +398,7 @@ export default function EditProfilePage() {
                   value={instagramUrl}
                   onChange={(e) => setInstagramUrl(e.target.value)}
                   placeholder="https://instagram.com/ton_compte"
-                  className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-surface-lighter/50 dark:backdrop-blur-sm"
                 />
               </div>
 
@@ -469,7 +414,7 @@ export default function EditProfilePage() {
                   value={tiktokUrl}
                   onChange={(e) => setTiktokUrl(e.target.value)}
                   placeholder="https://tiktok.com/@ton_compte"
-                  className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-surface-lighter/50 dark:backdrop-blur-sm"
                 />
               </div>
 
@@ -485,7 +430,7 @@ export default function EditProfilePage() {
                   value={twitterUrl}
                   onChange={(e) => setTwitterUrl(e.target.value)}
                   placeholder="https://twitter.com/ton_compte"
-                  className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-surface-lighter/50 dark:backdrop-blur-sm"
                 />
               </div>
 
@@ -501,7 +446,7 @@ export default function EditProfilePage() {
                   value={facebookUrl}
                   onChange={(e) => setFacebookUrl(e.target.value)}
                   placeholder="https://facebook.com/ton_compte"
-                  className="w-full rounded-lg border border-input bg-background px-4 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-xl border border-input bg-background px-4 py-2 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-surface-lighter/50 dark:backdrop-blur-sm"
                 />
               </div>
             </div>

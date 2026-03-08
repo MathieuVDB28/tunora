@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createSong } from "@/lib/actions/songs";
 import type { CreateSongInput, SongDifficulty } from "@/types";
+import { TUNING_GROUPS } from "@/lib/tunings";
 
 export interface SpotifyResult {
   title: string;
@@ -284,13 +285,15 @@ export function AddSongModal({ isOpen, onClose, onSuccess, prefillTrack }: AddSo
                     onChange={(e) => setTuning(e.target.value)}
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
                   >
-                    <option value="Standard">Standard (EADGBE)</option>
-                    <option value="Drop D">Drop D</option>
-                    <option value="Half Step Down">Half Step Down</option>
-                    <option value="Open G">Open G</option>
-                    <option value="Open D">Open D</option>
-                    <option value="DADGAD">DADGAD</option>
-                    <option value="Open C">Open C</option>
+                    {TUNING_GROUPS.map((group) => (
+                      <optgroup key={group.label} label={group.label}>
+                        {group.tunings.map((t) => (
+                          <option key={t.value} value={t.value}>
+                            {t.label} ({t.notes})
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
                   </select>
                 </div>
               </div>

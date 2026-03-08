@@ -1,8 +1,6 @@
 "use client";
 
-import { MobileSidebar } from "./mobile-sidebar";
-import { logout } from "@/lib/actions/auth";
-import { useRouter } from "next/navigation";
+import { BottomTabBar } from "./bottom-tab-bar";
 
 interface NavItem {
   href: string;
@@ -21,19 +19,6 @@ interface SidebarWrapperProps {
   };
 }
 
-export function SidebarWrapper({ navItems, userInfo }: SidebarWrapperProps) {
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    await logout();
-    router.push("/login");
-  };
-
-  return (
-    <MobileSidebar
-      navItems={navItems}
-      userInfo={userInfo}
-      onLogout={handleLogout}
-    />
-  );
+export function SidebarWrapper({ navItems }: SidebarWrapperProps) {
+  return <BottomTabBar navItems={navItems} />;
 }

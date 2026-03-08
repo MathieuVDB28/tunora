@@ -6,12 +6,13 @@ import { SidebarWrapper } from "@/components/layout/sidebar-wrapper";
 import { DesktopSidebar } from "@/components/layout/desktop-sidebar";
 
 const navItems = [
-  { href: "/library", label: "Bibliothèque", icon: "library" },
+  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/library", label: "Bibliotheque", icon: "library" },
   { href: "/progress", label: "Progression", icon: "chart" },
   { href: "/practice", label: "Practice", icon: "metronome" },
   { href: "/covers", label: "Covers", icon: "video" },
   { href: "/setlists", label: "Setlists", icon: "setlist" },
-  { href: "/challenges", label: "Défis", icon: "trophy" },
+  { href: "/challenges", label: "Defis", icon: "trophy" },
   { href: "/friends", label: "Amis", icon: "users" },
   { href: "/feed", label: "Feed", icon: "feed" },
   { href: "/audio", label: "Audio", icon: "audio" },
@@ -29,7 +30,7 @@ export default async function MainLayout({
     redirect("/login");
   }
 
-  // Récupérer le profil et le nombre d'amis
+  // Recuperer le profil et le nombre d'amis
   const [{ data: profile }, friendsCount] = await Promise.all([
     supabase
       .from("profiles")
@@ -53,14 +54,14 @@ export default async function MainLayout({
 
   return (
     <div className="flex min-h-screen">
-      {/* Mobile Sidebar */}
+      {/* Mobile Bottom Tab Bar */}
       <SidebarWrapper navItems={navItemsWithBadge} userInfo={userInfo} />
 
       {/* Desktop Sidebar */}
       <DesktopSidebar navItems={navItemsWithBadge} userInfo={userInfo} />
 
       {/* Main content */}
-      <main className="w-full min-w-0 flex-1 overflow-x-hidden p-4 pt-20 lg:ml-64 lg:p-8 lg:pt-8">
+      <main className="w-full min-w-0 flex-1 overflow-x-hidden p-4 pb-24 lg:ml-64 lg:p-8 lg:pb-8">
         {children}
       </main>
 

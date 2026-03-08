@@ -22,7 +22,7 @@ export default function LoginPage() {
       setError(result.error);
       setLoading(false);
     } else {
-      router.push("/library");
+      router.push("/dashboard");
       router.refresh();
     }
   }
@@ -47,7 +47,7 @@ export default function LoginPage() {
             type="email"
             required
             placeholder="toi@exemple.com"
-            className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-surface-lighter/50 dark:backdrop-blur-sm"
           />
         </div>
 
@@ -69,7 +69,7 @@ export default function LoginPage() {
             type="password"
             required
             placeholder="••••••••"
-            className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-surface-lighter/50 dark:backdrop-blur-sm"
           />
         </div>
 
@@ -82,7 +82,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
+          className="w-full rounded-xl bg-primary py-3 font-medium text-primary-foreground transition-all hover:opacity-90 hover:shadow-[0_0_20px_rgba(55,19,236,0.4)] disabled:opacity-50"
         >
           {loading ? "Connexion..." : "Se connecter"}
         </button>

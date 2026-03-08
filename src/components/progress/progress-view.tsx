@@ -96,43 +96,29 @@ export function ProgressView({
       </div>
 
       {/* Onglets */}
-      <div className="mb-6">
-        <div className="flex gap-1 p-1 bg-muted/50 rounded-lg w-fit">
-          <button
-            onClick={() => setActiveTab("journal")}
-            className={`
-              px-4 py-2 rounded-md text-sm font-medium transition-all
-              ${activeTab === "journal"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-              }
-            `}
-          >
-            <span className="flex items-center gap-2">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-              </svg>
-              Journal
-            </span>
-          </button>
-          <button
-            onClick={() => setActiveTab("stats")}
-            className={`
-              px-4 py-2 rounded-md text-sm font-medium transition-all
-              ${activeTab === "stats"
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-              }
-            `}
-          >
-            <span className="flex items-center gap-2">
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-              </svg>
-              Statistiques
-            </span>
-          </button>
-        </div>
+      <div className="mb-6 flex gap-6 border-b border-border">
+        <button
+          onClick={() => setActiveTab("journal")}
+          className={`flex items-center gap-2 border-b-2 pb-3 text-sm font-semibold transition-colors ${
+            activeTab === "journal"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">menu_book</span>
+          Journal
+        </button>
+        <button
+          onClick={() => setActiveTab("stats")}
+          className={`flex items-center gap-2 border-b-2 pb-3 text-sm font-semibold transition-colors ${
+            activeTab === "stats"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <span className="material-symbols-outlined text-[18px]">bar_chart</span>
+          Statistiques
+        </button>
       </div>
 
       {/* Contenu des onglets */}
@@ -145,7 +131,7 @@ export function ProgressView({
 
             {/* Morceau le plus pratiqué */}
             {stats.mostPracticedSong && (
-              <div className="mt-4 rounded-xl border border-border bg-card p-4">
+              <div className="mt-4 rounded-2xl border border-border bg-card p-4">
                 <p className="text-xs font-medium text-muted-foreground mb-2">
                   Morceau le plus pratiqué
                 </p>

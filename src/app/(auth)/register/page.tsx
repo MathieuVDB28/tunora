@@ -71,7 +71,7 @@ export default function RegisterPage() {
             type="text"
             required
             placeholder="guitar_hero"
-            className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-surface-lighter/50 dark:backdrop-blur-sm"
           />
         </div>
 
@@ -85,7 +85,7 @@ export default function RegisterPage() {
             type="email"
             required
             placeholder="toi@exemple.com"
-            className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-surface-lighter/50 dark:backdrop-blur-sm"
           />
         </div>
 
@@ -100,14 +100,14 @@ export default function RegisterPage() {
             required
             minLength={6}
             placeholder="••••••••"
-            className="w-full rounded-lg border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm transition-colors focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:bg-surface-lighter/50 dark:backdrop-blur-sm"
           />
           <p className="text-xs text-muted-foreground">Minimum 6 caractères</p>
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Visibilité du compte</label>
-          <div className="flex items-center justify-between rounded-lg border border-input bg-background p-4">
+          <div className="flex items-center justify-between rounded-xl border border-input bg-background p-4 dark:bg-surface-lighter/50">
             <div className="flex-1">
               <div className="font-medium text-sm">
                 {isPrivate ? "Compte privé" : "Compte public"}
@@ -145,7 +145,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
+          className="w-full rounded-xl bg-primary py-3 font-medium text-primary-foreground transition-all hover:opacity-90 hover:shadow-[0_0_20px_rgba(55,19,236,0.4)] disabled:opacity-50"
         >
           {loading ? "Création..." : "Créer mon compte"}
         </button>

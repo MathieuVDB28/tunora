@@ -342,15 +342,15 @@ export function LibraryView({ initialSongs, initialWishlistSongs, initialPlaylis
               {/* Filters and search */}
               <div className="mb-6 flex flex-col gap-4">
                 {/* Status tabs */}
-                <div className="flex gap-1 overflow-x-auto rounded-lg bg-muted p-1">
+                <div className="flex gap-6 overflow-x-auto border-b border-border">
                   {statusTabs.map((tab) => (
                     <button
                       key={tab.value}
                       onClick={() => setActiveFilter(tab.value)}
-                      className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                      className={`whitespace-nowrap border-b-2 pb-3 text-sm font-medium transition-colors ${
                         activeFilter === tab.value
-                          ? "bg-background text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
+                          ? "border-primary text-foreground"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       {tab.label}
@@ -362,20 +362,13 @@ export function LibraryView({ initialSongs, initialWishlistSongs, initialPlaylis
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   {/* Search */}
                   <div className="relative">
-                    <svg
-                      className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-muted-foreground">search</span>
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Rechercher..."
-                      className="w-full rounded-lg border border-input bg-background py-2 pl-9 pr-4 text-sm focus:border-primary focus:outline-none sm:w-64"
+                      className="w-full rounded-lg border border-input bg-card py-2.5 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 sm:w-72"
                     />
                   </div>
 
@@ -392,9 +385,9 @@ export function LibraryView({ initialSongs, initialWishlistSongs, initialPlaylis
                 </div>
               </div>
 
-              {/* Songs grid */}
+              {/* Songs list */}
               {filteredSongs.length > 0 ? (
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="flex flex-col gap-3">
                   {filteredSongs.map((song) => (
                     <SongCard
                       key={song.id}

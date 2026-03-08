@@ -84,28 +84,33 @@ export function FriendsView({
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 flex gap-1 overflow-x-auto rounded-lg bg-muted p-1">
+      <div className="mb-6 flex gap-6 border-b border-border">
         <button
           onClick={() => setActiveTab("friends")}
-          className={`whitespace-nowrap rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+          className={`whitespace-nowrap border-b-2 pb-3 text-sm font-medium transition-colors ${
             activeTab === "friends"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          Amis ({friends.length})
+          Amis
+          <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
+            activeTab === "friends" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+          }`}>
+            {friends.length}
+          </span>
         </button>
         <button
           onClick={() => setActiveTab("requests")}
-          className={`relative whitespace-nowrap rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+          className={`relative whitespace-nowrap border-b-2 pb-3 text-sm font-medium transition-colors ${
             activeTab === "requests"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           Demandes
           {requests.length > 0 && (
-            <span className="ml-1.5 rounded-full bg-primary px-1.5 py-0.5 text-xs text-primary-foreground">
+            <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
               {requests.length}
             </span>
           )}
