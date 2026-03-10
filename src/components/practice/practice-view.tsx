@@ -147,19 +147,7 @@ export function PracticeView({
             onClick={startSession}
             className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:opacity-90"
           >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <span className="material-symbols-outlined text-[20px]">timer</span>
             Démarrer une session
           </button>
         ) : (
@@ -198,31 +186,33 @@ export function PracticeView({
         {/* Content area */}
         <div className="space-y-4">
           {/* Tabs */}
-          <div className="flex gap-2">
+          <div className="flex gap-6 border-b border-border">
             <button
               onClick={() => setActiveTab("song")}
-              className={`flex-1 rounded-lg py-2 font-medium transition-colors ${
+              className={`flex items-center gap-2 border-b-2 pb-3 text-sm font-semibold transition-colors ${
                 activeTab === "song"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card hover:bg-accent"
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
+              <span className="material-symbols-outlined text-[18px]">music_note</span>
               Morceau
             </button>
             <button
               onClick={() => setActiveTab("exercises")}
-              className={`flex-1 rounded-lg py-2 font-medium transition-colors ${
+              className={`flex items-center gap-2 border-b-2 pb-3 text-sm font-semibold transition-colors ${
                 activeTab === "exercises"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card hover:bg-accent"
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
+              <span className="material-symbols-outlined text-[18px]">fitness_center</span>
               Exercices
             </button>
           </div>
 
           {/* Tab content */}
-          <div className="rounded-xl border border-border bg-card/50 p-4">
+          <div className="rounded-2xl border border-border bg-card/50 p-4">
             {activeTab === "song" && (
               <div className="space-y-4">
                 {selectedSong ? (

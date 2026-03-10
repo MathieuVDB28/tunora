@@ -20,44 +20,33 @@ export function AudioView() {
       </div>
 
       {/* Tab switcher */}
-      <div className="mb-6 flex gap-1 rounded-lg bg-muted p-1">
+      <div className="mb-6 flex gap-6 border-b border-border">
         <button
           onClick={() => setActiveTab("identifier")}
-          className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 border-b-2 pb-3 text-sm font-medium transition-colors ${
             activeTab === "identifier"
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <span className="flex items-center justify-center gap-2">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Identifier
-          </span>
+          <span className="material-symbols-outlined text-[18px]">mic</span>
+          Identifier
         </button>
         <button
           onClick={() => setActiveTab("tuner")}
-          className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 border-b-2 pb-3 text-sm font-medium transition-colors ${
             activeTab === "tuner"
-              ? "bg-card text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-accent-teal text-accent-teal"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <span className="flex items-center justify-center gap-2">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M12 2v4m0 12v4" strokeLinecap="round" />
-              <path d="M2 12h4m12 0h4" strokeLinecap="round" />
-            </svg>
-            Accordeur
-          </span>
+          <span className="material-symbols-outlined text-[18px]">tune</span>
+          Accordeur
         </button>
       </div>
 
       {/* Content */}
-      <div className="rounded-xl border border-border bg-card">
+      <div className="rounded-2xl border border-border bg-card">
         {activeTab === "identifier" ? <SongIdentifier /> : <GuitarTuner />}
       </div>
     </div>

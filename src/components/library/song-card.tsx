@@ -1,6 +1,6 @@
 "use client";
 
-import type { Song, SongStatus } from "@/types";
+import type { Song, SongStatus, SongDifficulty } from "@/types";
 
 interface SongCardProps {
   song: Song;
@@ -8,119 +8,99 @@ interface SongCardProps {
 }
 
 const statusLabels: Record<SongStatus, string> = {
-  want_to_learn: "À apprendre",
+  want_to_learn: "A apprendre",
   learning: "En cours",
-  mastered: "Maîtrisé",
+  mastered: "Maitrise",
 };
 
 const statusColors: Record<SongStatus, string> = {
-  want_to_learn: "bg-secondary text-secondary-foreground",
-  learning: "bg-primary/20 text-primary",
-  mastered: "bg-green-500/20 text-green-400",
+  want_to_learn: "bg-muted text-muted-foreground",
+  learning: "bg-primary/15 text-primary",
+  mastered: "bg-green-500/15 text-green-400",
 };
 
 const difficultyLabels: Record<string, string> = {
-  beginner: "Débutant",
-  intermediate: "Intermédiaire",
-  advanced: "Avancé",
-  expert: "Expert",
+  beginner: "EASY",
+  intermediate: "INTERMEDIATE",
+  advanced: "ADVANCED",
+  expert: "EXPERT",
+};
+
+const difficultyColors: Record<SongDifficulty, string> = {
+  beginner: "bg-green-500/20 text-green-400",
+  intermediate: "bg-blue-500/20 text-blue-400",
+  advanced: "bg-red-500/20 text-red-400",
+  expert: "bg-red-500/20 text-red-400",
 };
 
 export function SongCard({ song, onClick }: SongCardProps) {
   return (
     <button
       onClick={onClick}
-      className="group relative w-full overflow-hidden rounded-xl border border-border bg-card text-left transition-all hover:border-primary/50 hover:shadow-lg"
+      className="group flex w-full items-start gap-4 rounded-xl border border-border/50 bg-card p-4 text-left transition-all hover:border-primary/40 hover:bg-primary/[0.02]"
     >
-      {/* Cover */}
-      <div className="relative aspect-square">
+      {/* Album art */}
+      <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg">
         {song.cover_url ? (
           <img
             src={song.cover_url}
             alt={song.album || song.title}
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+            className="h-full w-full object-cover"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-muted">
-            <svg className="h-16 w-16 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-            </svg>
-          </div>
-        )}
-
-        {/* Status badge */}
-        <div className={`absolute left-2 top-2 rounded-full px-2 py-1 text-xs font-medium ${statusColors[song.status]}`}>
-          {statusLabels[song.status]}
-        </div>
-
-        {/* Notes indicator */}
-        {song.notes && (
-          <div className="absolute right-2 top-2 rounded-lg bg-background/80 p-1.5 backdrop-blur-sm">
-            <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-            </svg>
-          </div>
-        )}
-
-        {/* Progress bar overlay */}
-        {song.status === "learning" && (
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/90 to-transparent p-3 pt-8">
-            <div className="flex items-center gap-2">
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary transition-all"
-                  style={{ width: `${song.progress_percent}%` }}
-                />
-              </div>
-              <span className="text-sm font-medium">{song.progress_percent}%</span>
-            </div>
-          </div>
-        )}
-
-        {/* Mastered checkmark */}
-        {song.status === "mastered" && (
-          <div className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-green-500">
-            <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+            <span className="material-symbols-outlined text-2xl text-muted-foreground">music_note</span>
           </div>
         )}
       </div>
 
-      {/* Info */}
-      <div className="p-4">
-        <h3 className="truncate font-semibold">{song.title}</h3>
+      {/* Song info */}
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate text-base font-semibold">{song.title}</h3>
         <p className="truncate text-sm text-muted-foreground">{song.artist}</p>
 
-        {/* Tags */}
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        {/* Meta line */}
+        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+          {song.tuning && <span>{song.tuning}</span>}
+          {song.spotify_bpm && (
+            <>
+              <span>•</span>
+              <span>{Math.round(song.spotify_bpm)} BPM</span>
+            </>
+          )}
+          {song.capo_position > 0 && (
+            <>
+              <span>•</span>
+              <span>Capo {song.capo_position}</span>
+            </>
+          )}
+        </div>
+
+        {/* Difficulty badge */}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
           {song.difficulty && (
-            <span className="rounded-md bg-accent px-2 py-0.5 text-xs">
+            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${difficultyColors[song.difficulty]}`}>
               {difficultyLabels[song.difficulty]}
             </span>
           )}
-          {song.tuning !== "Standard" && (
-            <span className="rounded-md bg-accent px-2 py-0.5 text-xs">
-              {song.tuning}
-            </span>
-          )}
-          {song.capo_position > 0 && (
-            <span className="rounded-md bg-accent px-2 py-0.5 text-xs">
-              Capo {song.capo_position}
-            </span>
-          )}
-          {song.spotify_bpm && (
-            <span className="rounded-md bg-accent px-2 py-0.5 text-xs">
-              {Math.round(song.spotify_bpm)} BPM
+          {song.status !== "want_to_learn" && (
+            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${statusColors[song.status]}`}>
+              {statusLabels[song.status]}
+              {song.status === "learning" && ` ${song.progress_percent}%`}
             </span>
           )}
           {song.tabs_url && (
-            <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs text-primary">
+            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary">
               Tab
             </span>
           )}
         </div>
       </div>
+
+      {/* More menu icon */}
+      <span className="material-symbols-outlined flex-shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
+        more_vert
+      </span>
     </button>
   );
 }

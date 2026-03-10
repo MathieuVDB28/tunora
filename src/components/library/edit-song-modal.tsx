@@ -36,16 +36,7 @@ const difficultyOptions: { value: SongDifficulty | ""; label: string }[] = [
   { value: "expert", label: "Expert" },
 ];
 
-const tuningOptions = [
-  "Standard",
-  "Drop D",
-  "Half Step Down",
-  "Full Step Down",
-  "Open G",
-  "Open D",
-  "DADGAD",
-  "Open C",
-];
+import { TUNING_GROUPS } from "@/lib/tunings";
 
 export function EditSongModal({ song, isOpen, onClose, onUpdate, onDelete, userPlan = "free" }: EditSongModalProps) {
   const router = useRouter();
@@ -397,10 +388,14 @@ export function EditSongModal({ song, isOpen, onClose, onUpdate, onDelete, userP
                 onChange={(e) => setTuning(e.target.value)}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
               >
-                {tuningOptions.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
+                {TUNING_GROUPS.map((group) => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.tunings.map((t) => (
+                      <option key={t.value} value={t.value}>
+                        {t.label} ({t.notes})
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>

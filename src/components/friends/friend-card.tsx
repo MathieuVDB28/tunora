@@ -30,60 +30,60 @@ export function FriendCard({ friend, onViewProfile, onRefresh }: FriendCardProps
   };
 
   return (
-    <div className="group rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/50">
-      <div className="flex items-center gap-3">
-        {/* Avatar */}
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
-          {friend.profile.avatar_url ? (
-            <img
-              src={friend.profile.avatar_url}
-              alt={friend.profile.username}
-              className="h-12 w-12 rounded-full object-cover"
-            />
-          ) : (
-            friend.profile.display_name?.[0]?.toUpperCase() ||
-            friend.profile.username[0].toUpperCase()
-          )}
-        </div>
-
-        {/* Info */}
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-semibold">
-            {friend.profile.display_name || friend.profile.username}
+    <div className="group overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-primary/40">
+      {/* Cover image / gradient header */}
+      <div className="relative h-32 overflow-hidden">
+        {friend.profile.avatar_url ? (
+          <img
+            src={friend.profile.avatar_url}
+            alt={friend.profile.username}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary to-purple-600">
+            <span className="text-4xl font-bold text-white">
+              {(friend.profile.display_name?.[0] || friend.profile.username[0]).toUpperCase()}
+            </span>
           </div>
-          <div className="truncate text-sm text-muted-foreground">
-            @{friend.profile.username}
-          </div>
-        </div>
-
+        )}
         {/* Plan badge */}
         {friend.profile.plan !== "free" && (
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+          <span className="absolute right-3 top-3 rounded-full bg-primary/80 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
             {friend.profile.plan.toUpperCase()}
           </span>
         )}
       </div>
 
-      {/* Since date */}
-      <div className="mt-3 text-xs text-muted-foreground">
-        Ami depuis le {formatDate(friend.since)}
-      </div>
+      {/* Info */}
+      <div className="p-5">
+        <h3 className="truncate text-lg font-semibold">
+          {friend.profile.display_name || friend.profile.username}
+        </h3>
+        <p className="mt-0.5 truncate text-sm text-primary">
+          @{friend.profile.username}
+        </p>
 
-      {/* Actions */}
-      <div className="mt-4 flex gap-2">
-        <button
-          onClick={onViewProfile}
-          className="flex-1 rounded-lg bg-accent py-2 text-sm font-medium transition-colors hover:bg-accent/80"
-        >
-          Voir le profil
-        </button>
-        <button
-          onClick={handleRemove}
-          disabled={removing}
-          className="rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50"
-        >
-          {removing ? "..." : "Supprimer"}
-        </button>
+        <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+          Ami depuis le {formatDate(friend.since)}
+        </div>
+
+        {/* Actions */}
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={onViewProfile}
+            className="flex-1 rounded-lg bg-primary py-2 text-sm font-medium text-primary-foreground transition-colors hover:opacity-90"
+          >
+            Voir le profil
+          </button>
+          <button
+            onClick={handleRemove}
+            disabled={removing}
+            className="flex-1 rounded-lg border border-border py-2 text-sm text-muted-foreground transition-colors hover:border-destructive hover:text-destructive disabled:opacity-50"
+          >
+            {removing ? "..." : "Supprimer"}
+          </button>
+        </div>
       </div>
     </div>
   );

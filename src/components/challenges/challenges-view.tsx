@@ -80,28 +80,28 @@ export function ChallengesView({
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-border">
+      <div className="flex gap-6 border-b border-border">
         <button
           onClick={() => setActiveTab("challenges")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
             activeTab === "challenges"
-              ? "border-b-2 border-primary text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           Mes defis
           {myChallenges.length > 0 && (
-            <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs">
+            <span className="ml-2 rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary">
               {myChallenges.length}
             </span>
           )}
         </button>
         <button
           onClick={() => setActiveTab("invitations")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
             activeTab === "invitations"
-              ? "border-b-2 border-primary text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           Invitations
@@ -113,10 +113,10 @@ export function ChallengesView({
         </button>
         <button
           onClick={() => setActiveTab("leaderboard")}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
+          className={`border-b-2 pb-3 text-sm font-medium transition-colors ${
             activeTab === "leaderboard"
-              ? "border-b-2 border-primary text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           Classement
@@ -208,7 +208,7 @@ function EmptyState({
   onAction?: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-12 text-center">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-12 text-center">
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
         <svg
           className="h-8 w-8 text-primary"

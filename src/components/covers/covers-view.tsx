@@ -63,21 +63,27 @@ export function CoversView({ initialCovers, canUpload, coverLimit, coverCount }:
       {covers.length > 0 ? (
         <>
           {/* Filtres */}
-          <div className="mb-6 flex gap-1 overflow-x-auto rounded-lg bg-muted p-1">
+          <div className="mb-6 flex gap-6 border-b border-border">
             {filters.map((filter) => {
               const count = filter.value === "all" ? stats.total : stats[filter.value];
               return (
                 <button
                   key={filter.value}
                   onClick={() => setActiveFilter(filter.value)}
-                  className={`whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`whitespace-nowrap border-b-2 pb-3 text-sm font-medium transition-colors ${
                     activeFilter === filter.value
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {filter.label}
-                  <span className="ml-1.5 text-xs opacity-60">({count})</span>
+                  {count > 0 && (
+                    <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${
+                      activeFilter === filter.value ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                    }`}>
+                      {count}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -110,10 +116,7 @@ export function CoversView({ initialCovers, canUpload, coverLimit, coverCount }:
         /* État vide */
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <svg className="h-8 w-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="2" y="4" width="20" height="16" rx="2"/>
-              <path d="M10 9L15 12L10 15V9Z" fill="currentColor" stroke="none"/>
-            </svg>
+            <span className="material-symbols-outlined text-3xl text-primary">videocam</span>
           </div>
           <h3 className="mb-2 text-lg font-semibold">Aucun cover</h3>
           <p className="mb-6 max-w-sm text-center text-muted-foreground">
