@@ -8,7 +8,6 @@ import type {
   JamSessionWithDetails,
   JamSessionMessage,
   JamSessionMessageWithProfile,
-  JamSessionParticipantWithProfile,
   SetlistWithDetails,
 } from "@/types";
 
@@ -30,9 +29,9 @@ async function hasBandPlan(): Promise<boolean> {
   return profile?.plan === "band";
 }
 
-// === Create a jam session ===
+// === Create a jam session (personal or band) ===
 export async function createJamSession(
-  bandId: string,
+  bandId?: string,
   setlistId?: string
 ): Promise<{ success: boolean; error?: string; session?: JamSession }> {
   const supabase = await createClient();
@@ -44,37 +43,51 @@ export async function createJamSession(
     return { success: false, error: "Non authentifie" };
   }
 
-  // Check Band plan
-  const hasPlan = await hasBandPlan();
-  if (!hasPlan) {
-    return {
-      success: false,
-      error: "Tu dois avoir le plan Band pour demarrer une Jam",
-    };
-  }
+  // Band jam: check plan and membership
+  if (bandId) {
+    const hasPlan = await hasBandPlan();
+    if (!hasPlan) {
+      return {
+        success: false,
+        error: "Tu dois avoir le plan Band pour demarrer une Jam de groupe",
+      };
+    }
 
-  // Check band membership
-  const { data: membership } = await supabase
-    .from("band_members")
-    .select("id")
-    .eq("band_id", bandId)
-    .eq("user_id", user.id)
-    .single();
+    const { data: membership } = await supabase
+      .from("band_members")
+      .select("id")
+      .eq("band_id", bandId)
+      .eq("user_id", user.id)
+      .single();
 
-  if (!membership) {
-    return { success: false, error: "Tu n'es pas membre de ce groupe" };
-  }
+    if (!membership) {
+      return { success: false, error: "Tu n'es pas membre de ce groupe" };
+    }
 
-  // Check for existing active session
-  const { data: existingSession } = await supabase
-    .from("jam_sessions")
-    .select("id")
-    .eq("band_id", bandId)
-    .in("status", ["waiting", "active", "paused"])
-    .single();
+    // Check for existing active band session
+    const { data: existingSession } = await supabase
+      .from("jam_sessions")
+      .select("id")
+      .eq("band_id", bandId)
+      .in("status", ["waiting", "active", "paused"])
+      .single();
 
-  if (existingSession) {
-    return { success: false, error: "Une session Jam est deja en cours" };
+    if (existingSession) {
+      return { success: false, error: "Une session Jam est deja en cours" };
+    }
+  } else {
+    // Personal jam: check for existing active personal session
+    const { data: existingSession } = await supabase
+      .from("jam_sessions")
+      .select("id")
+      .is("band_id", null)
+      .eq("host_id", user.id)
+      .in("status", ["waiting", "active", "paused"])
+      .single();
+
+    if (existingSession) {
+      return { success: false, error: "Tu as deja une session Jam en cours" };
+    }
   }
 
   // Get first song from setlist if provided
@@ -103,7 +116,7 @@ export async function createJamSession(
   const { data: session, error } = await supabase
     .from("jam_sessions")
     .insert({
-      band_id: bandId,
+      band_id: bandId || null,
       host_id: user.id,
       setlist_id: setlistId || null,
       status: "waiting",
@@ -126,39 +139,41 @@ export async function createJamSession(
     user_id: user.id,
   });
 
-  // Notify band members
-  const { data: members } = await supabase
-    .from("band_members")
-    .select("user_id")
-    .eq("band_id", bandId)
-    .neq("user_id", user.id);
+  // Notify band members (only for band jams)
+  if (bandId) {
+    const { data: members } = await supabase
+      .from("band_members")
+      .select("user_id")
+      .eq("band_id", bandId)
+      .neq("user_id", user.id);
 
-  const { data: band } = await supabase
-    .from("bands")
-    .select("name")
-    .eq("id", bandId)
-    .single();
+    const { data: band } = await supabase
+      .from("bands")
+      .select("name")
+      .eq("id", bandId)
+      .single();
 
-  const { data: hostProfile } = await supabase
-    .from("profiles")
-    .select("username, display_name")
-    .eq("id", user.id)
-    .single();
+    const { data: hostProfile } = await supabase
+      .from("profiles")
+      .select("username, display_name")
+      .eq("id", user.id)
+      .single();
 
-  if (members && members.length > 0) {
-    const hostName =
-      hostProfile?.display_name || hostProfile?.username || "Un membre";
-    const notifications = members.map((m) => ({
-      userId: m.user_id,
-      payload: {
-        title: "Jam Session demarre !",
-        body: `${hostName} a demarre une Jam Session dans ${band?.name}`,
-        data: { url: `/jam/${session.id}` },
-      },
-      notificationType: "jam_session_started" as const,
-    }));
+    if (members && members.length > 0) {
+      const hostName =
+        hostProfile?.display_name || hostProfile?.username || "Un membre";
+      const notifications = members.map((m) => ({
+        userId: m.user_id,
+        payload: {
+          title: "Jam Session demarre !",
+          body: `${hostName} a demarre une Jam Session dans ${band?.name}`,
+          data: { url: `/jam/${session.id}` },
+        },
+        notificationType: "jam_session_started" as const,
+      }));
 
-    await sendPushNotificationToMultipleUsers(notifications);
+      await sendPushNotificationToMultipleUsers(notifications);
+    }
   }
 
   revalidatePath("/setlists");
@@ -290,6 +305,7 @@ export async function getJamSession(
 
   return {
     ...data,
+    band: data.band || null,
     setlist,
   } as JamSessionWithDetails;
 }

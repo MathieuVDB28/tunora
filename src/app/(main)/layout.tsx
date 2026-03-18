@@ -11,6 +11,7 @@ const navItems = [
   { href: "/progress", label: "Progression", icon: "chart" },
   { href: "/practice", label: "Practice", icon: "metronome" },
   { href: "/covers", label: "Covers", icon: "video" },
+  { href: "/albums", label: "Albums", icon: "album" },
   { href: "/setlists", label: "Setlists", icon: "setlist" },
   { href: "/challenges", label: "Defis", icon: "trophy" },
   { href: "/friends", label: "Amis", icon: "users" },

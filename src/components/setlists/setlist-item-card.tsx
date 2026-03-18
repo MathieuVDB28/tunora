@@ -241,6 +241,35 @@ export function SetlistItemCard({
         </>
       )}
 
+      {/* Tabs badge */}
+      {isSong && item.tabs_url && (
+        <div
+          className="shrink-0 rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-400"
+          title="Tablature liee"
+        >
+          Tab
+        </div>
+      )}
+
+      {/* Sections badge */}
+      {isSong &&
+        item.played_sections &&
+        item.played_sections.length > 0 && (
+          <div
+            className="shrink-0 rounded-full bg-purple-500/20 px-2 py-0.5 text-xs font-medium text-purple-400"
+            title={item.played_sections.map((s) => s.name).join(", ")}
+          >
+            {item.played_sections.length} sect.
+          </div>
+        )}
+
+      {/* BPM badge */}
+      {isSong && item.bpm && item.bpm > 0 && (
+        <div className="shrink-0 text-xs text-muted-foreground">
+          {item.bpm} bpm
+        </div>
+      )}
+
       {/* Duration */}
       {item.duration_seconds && (
         <div className="shrink-0 text-sm text-muted-foreground">

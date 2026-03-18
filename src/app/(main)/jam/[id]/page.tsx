@@ -29,11 +29,6 @@ export default async function JamPage({ params }: JamPageProps) {
     redirect("/login");
   }
 
-  // Check if user has band plan
-  if (profile.plan !== "band") {
-    redirect("/setlists");
-  }
-
   // Get session
   const session = await getJamSession(id);
   if (!session) {
@@ -45,12 +40,23 @@ export default async function JamPage({ params }: JamPageProps) {
     redirect("/setlists");
   }
 
-  // Check if user is band member
-  const isMember = session.band.members?.some(
-    (m) => m.user_id === user.id
-  );
-  if (!isMember) {
-    redirect("/setlists");
+  // Access control
+  if (session.band_id && session.band) {
+    // Band jam: check band plan and membership
+    if (profile.plan !== "band") {
+      redirect("/setlists");
+    }
+    const isMember = session.band.members?.some(
+      (m) => m.user_id === user.id
+    );
+    if (!isMember) {
+      redirect("/setlists");
+    }
+  } else {
+    // Personal jam: only host can access
+    if (session.host_id !== user.id) {
+      redirect("/setlists");
+    }
   }
 
   // Auto-join if not already participant

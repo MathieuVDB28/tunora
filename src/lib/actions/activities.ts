@@ -2,15 +2,18 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { sendPushNotificationToMultipleUsers } from "@/lib/notifications";
+import { sendPushNotification, sendPushNotificationToMultipleUsers } from "@/lib/notifications";
 import type { NotificationPayload, NotificationType } from "@/lib/notifications";
 import type {
   ActivityWithDetails,
+  ActivityCommentWithProfile,
+  ReactionSummary,
   CreateActivityInput,
   Song,
   CoverWithSong,
   Profile,
   WishlistSong,
+  AlbumReview,
 } from "@/types";
 
 // Mapper les types d'activités vers les types de notifications
@@ -119,6 +122,15 @@ function getNotificationForActivity(
         },
         notificationType: "challenge_won",
       };
+    case "album_reviewed":
+      return {
+        payload: {
+          title: "Nouvelle ecoute",
+          body: `${userName} a ecoute "${metadata?.album_name}" - ${metadata?.rating}/10`,
+          data: { url: "/feed" },
+        },
+        notificationType: "album_reviewed",
+      };
     default:
       return null;
   }
@@ -208,6 +220,62 @@ async function notifyFriendsOfActivity(
   }
 }
 
+// === Notifier le propriétaire d'une activité (réaction ou commentaire) ===
+async function notifyActivityOwner(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  activityId: string,
+  actorId: string,
+  type: "reaction" | "comment",
+  emoji?: string
+): Promise<void> {
+  try {
+    // Récupérer l'activité pour connaître le propriétaire
+    const { data: activity } = await supabase
+      .from("activities")
+      .select("user_id")
+      .eq("id", activityId)
+      .single();
+
+    if (!activity || activity.user_id === actorId) {
+      // Ne pas notifier si c'est sa propre activité
+      return;
+    }
+
+    // Récupérer le nom de l'utilisateur qui réagit/commente
+    const { data: actorProfile } = await supabase
+      .from("profiles")
+      .select("username, display_name")
+      .eq("id", actorId)
+      .single();
+
+    const actorName = actorProfile?.display_name || actorProfile?.username || "Quelqu'un";
+
+    if (type === "reaction") {
+      await sendPushNotification(
+        activity.user_id,
+        {
+          title: "Nouvelle reaction",
+          body: `${actorName} a reagi ${emoji} a ton activite`,
+          data: { url: "/feed" },
+        },
+        "activity_reaction"
+      );
+    } else {
+      await sendPushNotification(
+        activity.user_id,
+        {
+          title: "Nouveau commentaire",
+          body: `${actorName} a commente ton activite`,
+          data: { url: "/feed" },
+        },
+        "activity_comment"
+      );
+    }
+  } catch (error) {
+    console.error("Error notifying activity owner:", error);
+  }
+}
+
 // === Récupérer le feed d'activités des amis ===
 export async function getFeedActivities(
   limit = 50
@@ -275,6 +343,10 @@ export async function getFeedActivities(
     .filter((a) => a.type === "song_wishlisted" && a.reference_id)
     .map((a) => a.reference_id);
 
+  const albumReviewIds = activities
+    .filter((a) => a.type === "album_reviewed" && a.reference_id)
+    .map((a) => a.reference_id);
+
   // Récupérer tous les morceaux en une seule requête
   const songsMap = new Map<string, Song>();
   if (songIds.length > 0) {
@@ -328,11 +400,85 @@ export async function getFeedActivities(
     }
   }
 
+  // Récupérer tous les album reviews en une seule requête
+  const albumReviewsMap = new Map<string, AlbumReview>();
+  if (albumReviewIds.length > 0) {
+    const { data: albumReviews } = await supabase
+      .from("album_reviews")
+      .select("*")
+      .in("id", albumReviewIds);
+
+    if (albumReviews) {
+      albumReviews.forEach((review) => albumReviewsMap.set(review.id, review as AlbumReview));
+    }
+  }
+
+  // Récupérer les réactions en batch pour toutes les activités
+  const activityIds = activities.map((a) => a.id);
+  const reactionsMap = new Map<string, ReactionSummary[]>();
+  const userReactionsMap = new Map<string, string[]>();
+
+  if (activityIds.length > 0) {
+    const { data: allReactions } = await supabase
+      .from("activity_reactions")
+      .select("activity_id, user_id, emoji")
+      .in("activity_id", activityIds);
+
+    if (allReactions) {
+      // Grouper par activity_id
+      const grouped = new Map<string, { emoji: string; user_id: string }[]>();
+      for (const r of allReactions) {
+        const list = grouped.get(r.activity_id) || [];
+        list.push({ emoji: r.emoji, user_id: r.user_id });
+        grouped.set(r.activity_id, list);
+      }
+
+      for (const [actId, reactions] of grouped) {
+        // Compter par emoji
+        const emojiCounts = new Map<string, { count: number; reacted: boolean }>();
+        const userEmojis: string[] = [];
+        for (const r of reactions) {
+          const existing = emojiCounts.get(r.emoji) || { count: 0, reacted: false };
+          existing.count++;
+          if (r.user_id === user.id) {
+            existing.reacted = true;
+            userEmojis.push(r.emoji);
+          }
+          emojiCounts.set(r.emoji, existing);
+        }
+        const summaries: ReactionSummary[] = [];
+        for (const [emoji, data] of emojiCounts) {
+          summaries.push({ emoji, count: data.count, reacted: data.reacted });
+        }
+        reactionsMap.set(actId, summaries);
+        userReactionsMap.set(actId, userEmojis);
+      }
+    }
+  }
+
+  // Récupérer le nombre de commentaires en batch
+  const commentCountMap = new Map<string, number>();
+  if (activityIds.length > 0) {
+    const { data: commentCounts } = await supabase
+      .from("activity_comments")
+      .select("activity_id")
+      .in("activity_id", activityIds);
+
+    if (commentCounts) {
+      for (const c of commentCounts) {
+        commentCountMap.set(c.activity_id, (commentCountMap.get(c.activity_id) || 0) + 1);
+      }
+    }
+  }
+
   // Enrichir les activités avec les détails récupérés
   const enrichedActivities: ActivityWithDetails[] = activities.map((activity) => {
     const enriched: ActivityWithDetails = {
       ...activity,
       user: activity.user as Profile,
+      reactions: reactionsMap.get(activity.id) || [],
+      commentCount: commentCountMap.get(activity.id) || 0,
+      currentUserReactions: userReactionsMap.get(activity.id) || [],
     };
 
     if (activity.reference_id) {
@@ -378,6 +524,23 @@ export async function getFeedActivities(
             created_at: activity.created_at,
           } as WishlistSong;
         }
+      } else if (activity.type === "album_reviewed") {
+        const albumReview = albumReviewsMap.get(activity.reference_id);
+        if (albumReview) {
+          enriched.albumReview = albumReview;
+        } else if (activity.metadata?.album_name) {
+          enriched.albumReview = {
+            id: activity.reference_id,
+            user_id: activity.user_id,
+            album_name: activity.metadata.album_name as string,
+            artist_name: activity.metadata.artist_name as string,
+            cover_url: (activity.metadata.cover_url as string) || undefined,
+            rating: activity.metadata.rating as number,
+            review: (activity.metadata.review as string) || undefined,
+            created_at: activity.created_at,
+            updated_at: activity.created_at,
+          } as AlbumReview;
+        }
       }
     }
 
@@ -385,6 +548,159 @@ export async function getFeedActivities(
   });
 
   return enrichedActivities;
+}
+
+// === Toggle une réaction sur une activité ===
+export async function toggleReaction(
+  activityId: string,
+  emoji: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Non authentifié" };
+  }
+
+  // Vérifier si la réaction existe déjà
+  const { data: existing } = await supabase
+    .from("activity_reactions")
+    .select("id")
+    .eq("activity_id", activityId)
+    .eq("user_id", user.id)
+    .eq("emoji", emoji)
+    .single();
+
+  if (existing) {
+    // Supprimer la réaction
+    const { error } = await supabase
+      .from("activity_reactions")
+      .delete()
+      .eq("id", existing.id);
+
+    if (error) {
+      console.error("Error removing reaction:", error);
+      return { success: false, error: "Erreur lors de la suppression de la réaction" };
+    }
+  } else {
+    // Ajouter la réaction
+    const { error } = await supabase.from("activity_reactions").insert({
+      activity_id: activityId,
+      user_id: user.id,
+      emoji,
+    });
+
+    if (error) {
+      console.error("Error adding reaction:", error);
+      return { success: false, error: "Erreur lors de l'ajout de la réaction" };
+    }
+
+    // Notifier le propriétaire de l'activité
+    notifyActivityOwner(supabase, activityId, user.id, "reaction", emoji).catch(console.error);
+  }
+
+  revalidatePath("/feed");
+  return { success: true };
+}
+
+// === Ajouter un commentaire ===
+export async function addComment(
+  activityId: string,
+  content: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Non authentifié" };
+  }
+
+  const trimmed = content.trim();
+  if (!trimmed || trimmed.length > 500) {
+    return { success: false, error: "Le commentaire doit faire entre 1 et 500 caractères" };
+  }
+
+  const { error } = await supabase.from("activity_comments").insert({
+    activity_id: activityId,
+    user_id: user.id,
+    content: trimmed,
+  });
+
+  if (error) {
+    console.error("Error adding comment:", error);
+    return { success: false, error: "Erreur lors de l'ajout du commentaire" };
+  }
+
+  // Notifier le propriétaire de l'activité
+  notifyActivityOwner(supabase, activityId, user.id, "comment").catch(console.error);
+
+  revalidatePath("/feed");
+  return { success: true };
+}
+
+// === Supprimer un commentaire ===
+export async function deleteComment(
+  commentId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Non authentifié" };
+  }
+
+  const { error } = await supabase
+    .from("activity_comments")
+    .delete()
+    .eq("id", commentId)
+    .eq("user_id", user.id);
+
+  if (error) {
+    console.error("Error deleting comment:", error);
+    return { success: false, error: "Erreur lors de la suppression du commentaire" };
+  }
+
+  revalidatePath("/feed");
+  return { success: true };
+}
+
+// === Récupérer les commentaires d'une activité ===
+export async function getActivityComments(
+  activityId: string
+): Promise<ActivityCommentWithProfile[]> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const { data: comments, error } = await supabase
+    .from("activity_comments")
+    .select(`
+      *,
+      user:profiles!user_id(id, username, display_name, avatar_url, plan)
+    `)
+    .eq("activity_id", activityId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching comments:", error);
+    return [];
+  }
+
+  return (comments || []).map((c) => ({
+    ...c,
+    user: c.user as Profile,
+  })) as ActivityCommentWithProfile[];
 }
 
 // === Récupérer les activités récentes d'un ami spécifique ===

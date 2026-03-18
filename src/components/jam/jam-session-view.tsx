@@ -6,6 +6,7 @@ import { JamMetronome } from "./jam-metronome";
 import { JamChat } from "./jam-chat";
 import { JamParticipants } from "./jam-participants";
 import { JamSongQueue } from "./jam-song-queue";
+import { JamTabsViewer } from "./jam-tabs-viewer";
 import { leaveJamSession, endJamSession } from "@/lib/actions/jam-sessions";
 import type { JamSessionWithDetails, JamSessionMessageWithProfile, Profile } from "@/types";
 
@@ -22,6 +23,7 @@ export function JamSessionView({
 }: JamSessionViewProps) {
   const router = useRouter();
   const isHost = initialSession.host_id === currentUser.id;
+  const isPersonalJam = !initialSession.band_id;
 
   const {
     session,
@@ -52,7 +54,7 @@ export function JamSessionView({
   };
 
   const handleEnd = async () => {
-    if (!confirm("Terminer la Jam Session pour tout le monde ?")) return;
+    if (!isPersonalJam && !confirm("Terminer la Jam Session pour tout le monde ?")) return;
     await endJamSession(initialSession.id);
     router.push("/setlists");
   };
@@ -85,7 +87,9 @@ export function JamSessionView({
         </div>
         <h2 className="text-2xl font-bold mb-2">Session terminee</h2>
         <p className="text-muted-foreground mb-6">
-          La Jam Session a ete terminee par le host.
+          {isPersonalJam
+            ? "Ta session de pratique est terminee."
+            : "La Jam Session a ete terminee par le host."}
         </p>
         <button
           onClick={() => router.push("/setlists")}
@@ -104,10 +108,14 @@ export function JamSessionView({
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold">Jam Session</h1>
-              <span className="rounded-full bg-primary/20 px-3 py-1 text-sm font-medium text-primary">
-                {session.band.name}
-              </span>
+              <h1 className="text-xl font-bold">
+                {isPersonalJam ? "Jam Solo" : "Jam Session"}
+              </h1>
+              {session.band && (
+                <span className="rounded-full bg-primary/20 px-3 py-1 text-sm font-medium text-primary">
+                  {session.band.name}
+                </span>
+              )}
               {isConnected ? (
                 <span className="flex items-center gap-1.5 text-sm text-green-500">
                   <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
@@ -153,7 +161,7 @@ export function JamSessionView({
                     onClick={handleStartSession}
                     className="rounded-lg bg-green-500 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-green-600"
                   >
-                    Lancer la session
+                    Lancer
                   </button>
                 )}
                 {session.status === "active" && (
@@ -192,8 +200,14 @@ export function JamSessionView({
       </div>
 
       {/* Main content */}
-      <div className="flex-1 grid gap-4 lg:grid-cols-[1fr_350px] overflow-hidden">
-        {/* Left column - Main content */}
+      <div
+        className={`flex-1 overflow-hidden ${
+          isPersonalJam
+            ? "flex flex-col"
+            : "grid gap-4 lg:grid-cols-[1fr_350px]"
+        }`}
+      >
+        {/* Main column */}
         <div className="flex flex-col gap-4 overflow-auto p-4">
           {/* Metronome */}
           <JamMetronome
@@ -201,6 +215,21 @@ export function JamSessionView({
             isHost={isHost}
             onSync={syncMetronome}
           />
+
+          {/* Tabs viewer for current song */}
+          {session.setlist && session.current_song_index !== null && (
+            <JamTabsViewer
+              currentItem={
+                session.setlist.items.filter(
+                  (i) => i.item_type === "song"
+                )[session.current_song_index] || null
+              }
+              bpm={metronome.bpm}
+              timeSignatureBeats={metronome.timeSignature.beats}
+              isPlaying={metronome.isPlaying}
+              isHost={isHost}
+            />
+          )}
 
           {/* Song queue if setlist */}
           {session.setlist && (
@@ -220,18 +249,20 @@ export function JamSessionView({
           )}
         </div>
 
-        {/* Right column - Sidebar */}
-        <div className="flex flex-col gap-4 border-l border-border p-4 overflow-hidden">
-          {/* Participants */}
-          <JamParticipants participants={participants} hostId={session.host_id} />
+        {/* Right column - Sidebar (only for band jams) */}
+        {!isPersonalJam && (
+          <div className="flex flex-col gap-4 border-l border-border p-4 overflow-hidden">
+            {/* Participants */}
+            <JamParticipants participants={participants} hostId={session.host_id} />
 
-          {/* Chat */}
-          <JamChat
-            messages={messages}
-            currentUserId={currentUser.id}
-            onSendMessage={sendMessage}
-          />
-        </div>
+            {/* Chat */}
+            <JamChat
+              messages={messages}
+              currentUserId={currentUser.id}
+              onSendMessage={sendMessage}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

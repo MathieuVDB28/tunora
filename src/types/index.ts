@@ -303,7 +303,7 @@ export interface FriendRequest {
 }
 
 // Types pour les activités
-export type ActivityType = 'song_added' | 'song_mastered' | 'cover_posted' | 'friend_added' | 'song_wishlisted' | 'setlist_created' | 'band_created' | 'band_joined' | 'challenge_created' | 'challenge_accepted' | 'challenge_completed' | 'challenge_won';
+export type ActivityType = 'song_added' | 'song_mastered' | 'cover_posted' | 'friend_added' | 'song_wishlisted' | 'setlist_created' | 'band_created' | 'band_joined' | 'challenge_created' | 'challenge_accepted' | 'challenge_completed' | 'challenge_won' | 'album_reviewed';
 
 export interface Activity {
   id: string;
@@ -323,6 +323,37 @@ export interface ActivityWithDetails extends ActivityWithProfile {
   cover?: CoverWithSong;
   friend?: Profile;
   wishlistSong?: WishlistSong;
+  albumReview?: AlbumReview;
+  reactions?: ReactionSummary[];
+  commentCount?: number;
+  currentUserReactions?: string[];
+}
+
+// Types pour les réactions et commentaires d'activités
+export interface ActivityReaction {
+  id: string;
+  activity_id: string;
+  user_id: string;
+  emoji: string;
+  created_at: string;
+}
+
+export interface ReactionSummary {
+  emoji: string;
+  count: number;
+  reacted: boolean; // l'utilisateur courant a-t-il réagi avec cet emoji
+}
+
+export interface ActivityComment {
+  id: string;
+  activity_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+}
+
+export interface ActivityCommentWithProfile extends ActivityComment {
+  user: Profile;
 }
 
 // Type pour le profil d'un ami avec ses données
@@ -571,6 +602,19 @@ export interface UpdateBandInput {
 // =============================================
 export type SetlistItemType = 'song' | 'section';
 
+// Section jouée dans une tab (pour les setlists)
+export interface PlayedSection {
+  name: string;         // e.g., "Refrain", "Couplet 1", "Solo"
+  startMeasure: number; // Mesure de début
+  endMeasure: number;   // Mesure de fin
+}
+
+export const PLAYED_SECTION_PRESETS = [
+  'Intro', 'Couplet 1', 'Couplet 2', 'Couplet 3',
+  'Refrain', 'Pre-refrain', 'Post-refrain',
+  'Pont', 'Solo', 'Outro', 'Break', 'Riff',
+] as const;
+
 export interface Setlist {
   id: string;
   name: string;
@@ -604,6 +648,11 @@ export interface SetlistItem {
   notes?: string;
   transition_seconds: number;
   duration_seconds?: number;
+
+  // Tabs & sections fields
+  tabs_url?: string;
+  bpm?: number;
+  played_sections?: PlayedSection[];
 
   created_at: string;
   updated_at: string;
@@ -654,6 +703,9 @@ export interface CreateSetlistItemInput {
   notes?: string;
   transition_seconds?: number;
   duration_seconds?: number;
+  tabs_url?: string;
+  bpm?: number;
+  played_sections?: PlayedSection[];
 }
 
 export interface UpdateSetlistItemInput {
@@ -662,6 +714,9 @@ export interface UpdateSetlistItemInput {
   transition_seconds?: number;
   duration_seconds?: number;
   section_name?: string;
+  tabs_url?: string;
+  bpm?: number;
+  played_sections?: PlayedSection[];
 }
 
 // Predefined section types for setlists
@@ -868,7 +923,7 @@ export type JamSessionStatus = 'waiting' | 'active' | 'paused' | 'ended';
 
 export interface JamSession {
   id: string;
-  band_id: string;
+  band_id: string | null;
   host_id: string;
   setlist_id: string | null;
   status: JamSessionStatus;
@@ -892,7 +947,7 @@ export interface JamSession {
 }
 
 export interface JamSessionWithDetails extends JamSession {
-  band: BandWithMembers;
+  band?: BandWithMembers | null;
   host: Profile;
   setlist?: SetlistWithDetails | null;
   participants: JamSessionParticipantWithProfile[];
@@ -1050,7 +1105,7 @@ export interface SongAudioFeatures {
 // Types pour la recherche de tablatures
 // =============================================
 
-export type TabSourceType = 'songsterr' | 'ultimate_guitar';
+export type TabSourceType = 'songsterr';
 
 export interface TabSource {
   source: TabSourceType;
@@ -1059,12 +1114,16 @@ export interface TabSource {
   url: string;
   type?: string;
   rating?: number;
+  songsterrId?: number;
 }
 
-export interface SongsterrSong {
-  id: number;
-  title: string;
-  artist: { name: string };
+// Structure de tab analysée depuis Songsterr
+export interface SongsterrTabStructure {
+  bpm: number;
+  totalMeasures: number;
+  timeSignatureBeats: number;
+  timeSignatureValue: number;
+  sections: PlayedSection[];
 }
 
 // =============================================
@@ -1092,4 +1151,56 @@ export interface PitchDetectionResult {
   note: string;
   octave: number;
   cents: number;
+}
+
+// =============================================
+// Types pour les Album Reviews
+// =============================================
+
+export interface AlbumReview {
+  id: string;
+  user_id: string;
+  album_name: string;
+  artist_name: string;
+  cover_url?: string;
+  spotify_id?: string;
+  spotify_url?: string;
+  release_date?: string;
+  total_tracks?: number;
+  rating: number; // 1-10
+  review?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AlbumReviewWithProfile extends AlbumReview {
+  user: Profile;
+}
+
+export interface CreateAlbumReviewInput {
+  album_name: string;
+  artist_name: string;
+  cover_url?: string;
+  spotify_id?: string;
+  spotify_url?: string;
+  release_date?: string;
+  total_tracks?: number;
+  rating: number;
+  review?: string;
+}
+
+export interface UpdateAlbumReviewInput {
+  rating?: number;
+  review?: string;
+}
+
+// Type pour les recommandations Spotify
+export interface SpotifyRecommendation {
+  id: string;
+  name: string;
+  artists: { name: string }[];
+  images: { url: string; width: number; height: number }[];
+  external_urls: { spotify: string };
+  release_date: string;
+  total_tracks: number;
 }

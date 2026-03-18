@@ -1,0 +1,219 @@
+"use client";
+
+import { useState } from "react";
+import { deleteAlbumReview } from "@/lib/actions/albums";
+import type { AlbumReview } from "@/types";
+
+interface AlbumReviewCardProps {
+  review: AlbumReview;
+  onDeleted: (id: string) => void;
+}
+
+function getRatingColor(rating: number) {
+  if (rating >= 7) return { text: "text-green-400", bg: "bg-green-500", bgLight: "bg-green-500/20" };
+  if (rating >= 4) return { text: "text-amber-400", bg: "bg-amber-500", bgLight: "bg-amber-500/20" };
+  return { text: "text-red-400", bg: "bg-red-500", bgLight: "bg-red-500/20" };
+}
+
+export function AlbumReviewCard({ review, onDeleted }: AlbumReviewCardProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    const result = await deleteAlbumReview(review.id);
+    if (result.success) {
+      onDeleted(review.id);
+    }
+    setIsDeleting(false);
+    setShowMenu(false);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  const colors = getRatingColor(review.rating);
+
+  return (
+    <>
+      <div
+        onClick={() => setShowDetail(true)}
+        className="group relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-border/80"
+      >
+        {/* Cover image */}
+        <div className="relative aspect-square overflow-hidden bg-muted">
+          {review.cover_url ? (
+            <img
+              src={review.cover_url}
+              alt={review.album_name}
+              className="h-full w-full object-cover transition-transform group-hover:scale-105"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <span className="material-symbols-outlined text-5xl text-muted-foreground">album</span>
+            </div>
+          )}
+
+          {/* Rating badge - opaque background for visibility */}
+          <div className={`absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full ${colors.bg} px-3 py-1.5 text-sm font-bold text-white shadow-lg`}>
+            <span className="material-symbols-outlined text-[14px]">star</span>
+            {review.rating}/10
+          </div>
+
+          {/* Menu button */}
+          <div className="absolute right-2 bottom-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
+            >
+              <span className="material-symbols-outlined text-[18px]">more_vert</span>
+            </button>
+            {showMenu && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setShowMenu(false); }} />
+                <div className="absolute right-0 bottom-10 z-20 w-40 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                    disabled={isDeleting}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-accent disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">delete</span>
+                    {isDeleting ? "Suppression..." : "Supprimer"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Info */}
+        <div className="p-3">
+          <h3 className="truncate font-semibold">{review.album_name}</h3>
+          <p className="truncate text-sm text-muted-foreground">{review.artist_name}</p>
+
+          {review.review && (
+            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground italic">
+              &ldquo;{review.review}&rdquo;
+            </p>
+          )}
+
+          <p className="mt-2 text-xs text-muted-foreground">
+            {formatDate(review.created_at)}
+          </p>
+        </div>
+      </div>
+
+      {/* Detail Modal */}
+      {showDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+            onClick={() => setShowDetail(false)}
+          />
+          <div className="relative z-10 flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
+            {/* Header image */}
+            <div className="relative h-64 shrink-0 overflow-hidden bg-muted">
+              {review.cover_url ? (
+                <img
+                  src={review.cover_url}
+                  alt={review.album_name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <span className="material-symbols-outlined text-7xl text-muted-foreground">album</span>
+                </div>
+              )}
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+              {/* Close button */}
+              <button
+                onClick={() => setShowDetail(false)}
+                className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+
+              {/* Album info overlay */}
+              <div className="absolute bottom-4 left-4 right-4">
+                <h2 className="text-2xl font-bold text-white">{review.album_name}</h2>
+                <p className="text-white/80">{review.artist_name}</p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-5">
+              {/* Rating */}
+              <div className="mb-5 flex items-center gap-3">
+                <div className={`flex items-center gap-1.5 rounded-full ${colors.bg} px-4 py-2 text-lg font-bold text-white`}>
+                  <span className="material-symbols-outlined text-[18px]">star</span>
+                  {review.rating}/10
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {formatDate(review.created_at)}
+                </span>
+              </div>
+
+              {/* Album metadata */}
+              {(review.release_date || review.total_tracks) && (
+                <div className="mb-5 flex flex-wrap gap-3 text-sm text-muted-foreground">
+                  {review.release_date && (
+                    <span className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+                      {review.release_date.split("-")[0]}
+                    </span>
+                  )}
+                  {review.total_tracks && (
+                    <span className="flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[16px]">music_note</span>
+                      {review.total_tracks} titres
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Review */}
+              {review.review ? (
+                <div>
+                  <h3 className="mb-2 text-sm font-medium text-muted-foreground">Impression</h3>
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                    {review.review}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm italic text-muted-foreground">
+                  Aucune impression ajoutee
+                </p>
+              )}
+
+              {/* Spotify link */}
+              {review.spotify_url && (
+                <a
+                  href={review.spotify_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-5 flex items-center gap-2 rounded-xl bg-[#1DB954]/10 px-4 py-3 text-sm font-medium text-[#1DB954] transition-colors hover:bg-[#1DB954]/20"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                  </svg>
+                  Ecouter sur Spotify
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

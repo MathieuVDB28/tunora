@@ -7,9 +7,10 @@ import type { ActivityWithDetails } from "@/types";
 
 interface FeedViewProps {
   initialActivities: ActivityWithDetails[];
+  currentUserId: string;
 }
 
-export function FeedView({ initialActivities }: FeedViewProps) {
+export function FeedView({ initialActivities, currentUserId }: FeedViewProps) {
   const router = useRouter();
   const [activities, setActivities] = useState(initialActivities);
 
@@ -31,7 +32,7 @@ export function FeedView({ initialActivities }: FeedViewProps) {
       {activities.length > 0 ? (
         <div className="space-y-4">
           {activities.map((activity) => (
-            <ActivityCard key={activity.id} activity={activity} />
+            <ActivityCard key={activity.id} activity={activity} currentUserId={currentUserId} />
           ))}
         </div>
       ) : (

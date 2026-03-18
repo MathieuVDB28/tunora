@@ -1,9 +1,12 @@
 "use client";
 
 import type { ActivityWithDetails } from "@/types";
+import { ActivityReactions } from "./activity-reactions";
+import { ActivityComments } from "./activity-comments";
 
 interface ActivityCardProps {
   activity: ActivityWithDetails;
+  currentUserId: string;
 }
 
 const activityMessages: Record<string, string> = {
@@ -19,6 +22,7 @@ const activityMessages: Record<string, string> = {
   challenge_accepted: "a accept\u00e9 un d\u00e9fi",
   challenge_completed: "a termin\u00e9 un d\u00e9fi",
   challenge_won: "a remport\u00e9 un d\u00e9fi !",
+  album_reviewed: "a \u00e9cout\u00e9 un album",
 };
 
 const activityIcons: Record<string, string> = {
@@ -34,6 +38,7 @@ const activityIcons: Record<string, string> = {
   challenge_accepted: "emoji_events",
   challenge_completed: "emoji_events",
   challenge_won: "emoji_events",
+  album_reviewed: "album",
 };
 
 function ActivityIcon({ type }: { type: string }) {
@@ -44,7 +49,7 @@ function ActivityIcon({ type }: { type: string }) {
   );
 }
 
-export function ActivityCard({ activity }: ActivityCardProps) {
+export function ActivityCard({ activity, currentUserId }: ActivityCardProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -234,6 +239,41 @@ export function ActivityCard({ activity }: ActivityCardProps) {
         </div>
       )}
 
+      {activity.type === "album_reviewed" && activity.albumReview && (
+        <div className="overflow-hidden rounded-xl bg-accent/30">
+          <div className="flex items-center gap-3 p-3">
+            {activity.albumReview.cover_url ? (
+              <img
+                src={activity.albumReview.cover_url}
+                alt={activity.albumReview.album_name}
+                className="h-20 w-20 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-muted">
+                <span className="material-symbols-outlined text-3xl text-muted-foreground">album</span>
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-semibold">{activity.albumReview.album_name}</div>
+              <div className="truncate text-sm text-muted-foreground">{activity.albumReview.artist_name}</div>
+              <div className="mt-1.5 flex items-center gap-1.5">
+                <div className="flex items-center gap-1 rounded-full bg-amber-500/20 px-2.5 py-0.5 text-sm font-semibold text-amber-500">
+                  <span className="material-symbols-outlined text-[16px]">star</span>
+                  {activity.albumReview.rating}/10
+                </div>
+              </div>
+            </div>
+          </div>
+          {activity.albumReview.review && (
+            <div className="border-t border-border/50 px-3 py-2.5">
+              <p className="text-sm leading-relaxed text-muted-foreground italic">
+                &ldquo;{activity.albumReview.review}&rdquo;
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {activity.type.startsWith("challenge_") && activity.metadata && (
         <div className={`flex items-center gap-3 rounded-xl p-3 ${
           activity.type === "challenge_won"
@@ -262,6 +302,20 @@ export function ActivityCard({ activity }: ActivityCardProps) {
           )}
         </div>
       )}
+
+      {/* Réactions et commentaires */}
+      <div className="mt-3 flex flex-col gap-2.5 border-t border-border pt-3">
+        <ActivityReactions
+          activityId={activity.id}
+          reactions={activity.reactions || []}
+          currentUserReactions={activity.currentUserReactions || []}
+        />
+        <ActivityComments
+          activityId={activity.id}
+          commentCount={activity.commentCount || 0}
+          currentUserId={currentUserId}
+        />
+      </div>
     </div>
   );
 }

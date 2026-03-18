@@ -466,6 +466,9 @@ export async function duplicateSetlist(
     notes: item.notes,
     transition_seconds: item.transition_seconds,
     duration_seconds: item.duration_seconds,
+    tabs_url: item.tabs_url,
+    bpm: item.bpm,
+    played_sections: item.played_sections || [],
   }));
 
   if (itemsToCopy.length > 0) {

@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { ProUpsell } from "@/components/subscription/pro-upsell";
-import type { TabSource, UserPlan } from "@/types";
+import type { TabSource, UserPlan, SongsterrTabStructure } from "@/types";
 
 interface TabsSearchPanelProps {
   title: string;
   artist: string;
   currentTabsUrl: string;
   onSelectTab: (url: string) => void;
+  onTabStructure?: (structure: SongsterrTabStructure) => void;
   userPlan: UserPlan;
 }
 
@@ -17,12 +18,14 @@ export function TabsSearchPanel({
   artist,
   currentTabsUrl,
   onSelectTab,
+  onTabStructure,
   userPlan,
 }: TabsSearchPanelProps) {
   const [searching, setSearching] = useState(false);
   const [results, setResults] = useState<TabSource[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [manualUrl, setManualUrl] = useState(currentTabsUrl);
+  const [analyzingId, setAnalyzingId] = useState<number | null>(null);
 
   const handleSearch = async () => {
     setSearching(true);
@@ -46,6 +49,56 @@ export function TabsSearchPanel({
     }
   };
 
+  const handleSelectAndAnalyze = async (result: TabSource) => {
+    onSelectTab(result.url);
+    setManualUrl(result.url);
+
+    // Auto-analyze if we have a songsterrId and the callback
+    if (onTabStructure && result.songsterrId) {
+      setAnalyzingId(result.songsterrId);
+      try {
+        const response = await fetch(
+          `/api/tabs/structure?songsterrId=${result.songsterrId}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (data.structure) {
+            onTabStructure(data.structure);
+          }
+        }
+      } catch {
+        // Silently fail - user can still manually add sections
+      } finally {
+        setAnalyzingId(null);
+      }
+    }
+  };
+
+  // Analyze structure from a manually entered Songsterr URL
+  const handleAnalyzeUrl = async () => {
+    if (!onTabStructure || !manualUrl) return;
+    if (!manualUrl.includes("songsterr.com")) return;
+
+    setAnalyzingId(-1); // special value for manual URL analysis
+    try {
+      const response = await fetch(
+        `/api/tabs/structure?url=${encodeURIComponent(manualUrl)}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data.structure) {
+          onTabStructure(data.structure);
+        }
+      }
+    } catch {
+      // Silently fail
+    } finally {
+      setAnalyzingId(null);
+    }
+  };
+
+  const isSongsterrUrl = manualUrl?.includes("songsterr.com");
+
   return (
     <div className="space-y-4">
       {/* Manual URL input */}
@@ -56,7 +109,7 @@ export function TabsSearchPanel({
             type="url"
             value={manualUrl}
             onChange={(e) => setManualUrl(e.target.value)}
-            placeholder="https://ultimate-guitar.com/..."
+            placeholder="https://www.songsterr.com/a/wsa/..."
             className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
           />
           {manualUrl !== currentTabsUrl && manualUrl && (
@@ -68,13 +121,38 @@ export function TabsSearchPanel({
             </button>
           )}
         </div>
+        {/* Analyze button for manual Songsterr URL */}
+        {onTabStructure && isSongsterrUrl && manualUrl && (
+          <button
+            onClick={handleAnalyzeUrl}
+            disabled={analyzingId !== null}
+            className="mt-1.5 flex items-center gap-1.5 text-xs text-primary hover:underline disabled:opacity-50"
+          >
+            {analyzingId === -1 ? (
+              <>
+                <svg className="h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                </svg>
+                Analyse en cours...
+              </>
+            ) : (
+              <>
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Analyser la tab (BPM, sections)
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Search tabs */}
       {userPlan === "free" ? (
         <ProUpsell
           feature="Recherche de tablatures"
-          description="Trouve automatiquement les tablatures sur Songsterr et Ultimate Guitar."
+          description="Trouve automatiquement les tablatures sur Songsterr."
           compact
         />
       ) : (
@@ -90,7 +168,7 @@ export function TabsSearchPanel({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
-                Recherche...
+                Recherche sur Songsterr...
               </>
             ) : (
               <>
@@ -109,7 +187,7 @@ export function TabsSearchPanel({
           {results && results.length > 0 && (
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-muted-foreground">
-                {results.length} résultat{results.length > 1 ? "s" : ""} trouvé{results.length > 1 ? "s" : ""}
+                {results.length} resultat{results.length > 1 ? "s" : ""} trouve{results.length > 1 ? "s" : ""}
               </h4>
               <div className="space-y-2">
                 {results.map((result, index) => (
@@ -117,24 +195,26 @@ export function TabsSearchPanel({
                     key={`${result.source}-${index}`}
                     className="flex items-center gap-3 rounded-lg border border-border p-3"
                   >
-                    {/* Source icon */}
-                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                      result.source === "songsterr"
-                        ? "bg-blue-500/10 text-blue-500"
-                        : "bg-orange-500/10 text-orange-500"
-                    }`}>
-                      {result.source === "songsterr" ? "S" : "UG"}
+                    {/* Songsterr icon */}
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold bg-blue-500/10 text-blue-500">
+                      S
                     </div>
 
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{result.title}</p>
                       <p className="truncate text-xs text-muted-foreground">
                         {result.artist}
-                        {result.type && ` - ${result.type}`}
                       </p>
                     </div>
 
                     <div className="flex shrink-0 items-center gap-2">
+                      {/* Analyzing indicator */}
+                      {analyzingId === result.songsterrId && (
+                        <svg className="h-4 w-4 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                        </svg>
+                      )}
                       <a
                         href={result.url}
                         target="_blank"
@@ -146,11 +226,9 @@ export function TabsSearchPanel({
                         </svg>
                       </a>
                       <button
-                        onClick={() => {
-                          onSelectTab(result.url);
-                          setManualUrl(result.url);
-                        }}
-                        className="rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+                        onClick={() => handleSelectAndAnalyze(result)}
+                        disabled={analyzingId !== null}
+                        className="rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20 disabled:opacity-50"
                       >
                         Utiliser
                       </button>
@@ -163,7 +241,7 @@ export function TabsSearchPanel({
 
           {results && results.length === 0 && (
             <p className="text-center text-sm text-muted-foreground">
-              Aucune tablature trouvée pour ce morceau
+              Aucune tablature trouvee pour ce morceau
             </p>
           )}
         </>

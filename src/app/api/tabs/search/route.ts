@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { searchSongsterr, getSongsterrUrl } from "@/lib/services/songsterr";
-import { getTabSources } from "@/lib/services/ultimate-guitar";
 import type { TabSource } from "@/types";
 
 export async function GET(request: NextRequest) {
@@ -30,21 +29,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Fonctionnalité Pro/Band uniquement" }, { status: 403 });
   }
 
-  // Fetch from both sources in parallel
-  const [songsterrResults, ugSources] = await Promise.all([
-    searchSongsterr(title, artist),
-    Promise.resolve(getTabSources(title, artist)),
-  ]);
+  // Fetch from Songsterr (new API)
+  const songsterrResults = await searchSongsterr(title, artist);
 
-  // Convert Songsterr results to TabSource format
-  const songsterrSources: TabSource[] = songsterrResults.map((result) => ({
+  // Convert to TabSource format
+  const sources: TabSource[] = songsterrResults.map((result) => ({
     source: "songsterr" as const,
     title: result.title,
-    artist: result.artist.name,
-    url: getSongsterrUrl(result.id),
+    artist: result.artist,
+    url: getSongsterrUrl(result.songId),
+    songsterrId: result.songId,
   }));
 
-  const allSources = [...songsterrSources, ...ugSources];
-
-  return NextResponse.json({ sources: allSources });
+  return NextResponse.json({ sources });
 }

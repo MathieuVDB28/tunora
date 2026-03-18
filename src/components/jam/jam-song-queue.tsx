@@ -105,10 +105,29 @@ export function JamSongQueue({
                 >
                   {item.song_title}
                 </p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {item.song_artist}
-                </p>
+                <div className="flex items-center gap-1.5">
+                  <p className="truncate text-sm text-muted-foreground">
+                    {item.song_artist}
+                  </p>
+                  {item.tabs_url && (
+                    <span className="shrink-0 rounded-full bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-400">
+                      Tab
+                    </span>
+                  )}
+                  {item.played_sections && item.played_sections.length > 0 && (
+                    <span className="shrink-0 rounded-full bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-medium text-purple-400">
+                      {item.played_sections.length} sect.
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {/* BPM indicator */}
+              {item.bpm && item.bpm > 0 && (
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {item.bpm} bpm
+                </span>
+              )}
 
               {/* Current indicator */}
               {isCurrent && (

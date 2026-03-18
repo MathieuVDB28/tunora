@@ -28,16 +28,19 @@ import {
   reorderSetlistItems,
   duplicateSetlist,
 } from "@/lib/actions/setlists";
+import { createJamSession } from "@/lib/actions/jam-sessions";
 import type {
   SetlistWithDetails,
   SetlistItemWithSongOwner,
   Profile,
   Song,
+  UserPlan,
 } from "@/types";
 
 interface SetlistDetailViewProps {
   setlist: SetlistWithDetails;
   songSources: { member: Profile | null; songs: Song[] }[];
+  userPlan: UserPlan;
 }
 
 function formatDuration(seconds: number): string {
@@ -66,6 +69,7 @@ function formatDate(dateString: string): string {
 export function SetlistDetailView({
   setlist: initialSetlist,
   songSources,
+  userPlan,
 }: SetlistDetailViewProps) {
   const router = useRouter();
   const [setlist, setSetlist] = useState(initialSetlist);
@@ -85,6 +89,7 @@ export function SetlistDetailView({
   const [venue, setVenue] = useState(initialSetlist.venue || "");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [launchingJam, setLaunchingJam] = useState(false);
 
   // Sync with server data
   useEffect(() => {
@@ -167,6 +172,21 @@ export function SetlistDetailView({
 
   const handleRefresh = () => {
     router.refresh();
+  };
+
+  const handleLaunchJam = async () => {
+    setLaunchingJam(true);
+    // Band jam or personal jam
+    const result = await createJamSession(
+      setlist.band_id || undefined,
+      setlist.id
+    );
+    if (result.success && result.session) {
+      router.push(`/jam/${result.session.id}`);
+    } else {
+      alert(result.error || "Erreur lors du lancement de la Jam");
+      setLaunchingJam(false);
+    }
   };
 
   return (
@@ -351,6 +371,33 @@ export function SetlistDetailView({
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
+              {/* Launch Jam button - for all setlists (band needs band plan) */}
+              {(!setlist.band_id || userPlan === "band") && (
+                <button
+                  onClick={handleLaunchJam}
+                  disabled={launchingJam}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-sm font-medium text-white transition-all hover:bg-amber-600 disabled:opacity-50"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                    />
+                  </svg>
+                  {launchingJam
+                    ? "Lancement..."
+                    : setlist.band_id
+                    ? "Lancer un Jam"
+                    : "Lancer un Jam Solo"}
+                </button>
+              )}
               <button
                 onClick={() => setIsEditingHeader(true)}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
@@ -522,6 +569,7 @@ export function SetlistDetailView({
         onClose={() => setEditingItem(null)}
         onSuccess={handleRefresh}
         item={editingItem}
+        userPlan={userPlan}
       />
     </div>
   );

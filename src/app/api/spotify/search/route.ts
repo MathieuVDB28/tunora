@@ -22,8 +22,8 @@ export async function GET(request: NextRequest) {
   try {
     if (type === 'album') {
       const albums = await searchAlbums(query);
-      const formattedAlbums = albums.map(formatAlbumForFavorite);
-      return NextResponse.json(formattedAlbums);
+      // Return full album data (used by album reviews and favorites)
+      return NextResponse.json(albums);
     } else {
       const tracks = await searchTracks(query);
       const formattedTracks = tracks.map(formatTrackForSong);
