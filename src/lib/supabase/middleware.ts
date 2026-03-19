@@ -48,10 +48,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Redirige vers library si connecté et sur une page d'auth
-  if (isAuthRoute && user) {
+  // Redirige vers dashboard si connecté et sur la landing page ou une page d'auth
+  if ((isAuthRoute || pathname === '/') && user) {
     const url = request.nextUrl.clone()
-    url.pathname = '/library'
+    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 

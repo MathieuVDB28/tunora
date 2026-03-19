@@ -12,13 +12,13 @@ interface ChallengeInvitationCardProps {
 const CHALLENGE_TYPE_LABELS: Record<string, string> = {
   practice_time: "Temps de pratique",
   streak: "Streak de jours",
-  song_mastery: "Maitrise de morceau",
+  song_mastery: "Maîtrise de morceau",
 };
 
 const CHALLENGE_TYPE_DESCRIPTIONS: Record<string, string> = {
   practice_time: "Celui qui pratique le plus de minutes gagne",
   streak: "Celui qui maintient le plus long streak de jours gagne",
-  song_mastery: "Le premier a maitriser le morceau gagne",
+  song_mastery: "Le premier à maîtriser le morceau gagne",
 };
 
 export function ChallengeInvitationCard({ challenge }: ChallengeInvitationCardProps) {
@@ -75,7 +75,7 @@ export function ChallengeInvitationCard({ challenge }: ChallengeInvitationCardPr
         )}
         <div>
           <p className="font-medium">{creatorName}</p>
-          <p className="text-sm text-muted-foreground">t'invite a un defi</p>
+          <p className="text-sm text-muted-foreground">t'invite à un défi</p>
         </div>
       </div>
 
@@ -88,7 +88,7 @@ export function ChallengeInvitationCard({ challenge }: ChallengeInvitationCardPr
           </span>
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Duree</span>
+          <span className="text-sm text-muted-foreground">Durée</span>
           <span className="text-sm font-medium">{challenge.duration_days} jours</span>
         </div>
         {challenge.song_title && (

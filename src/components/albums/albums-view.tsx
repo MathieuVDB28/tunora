@@ -33,7 +33,7 @@ export function AlbumsView({ initialReviews, userPlan }: AlbumsViewProps) {
         <div>
           <h1 className="text-3xl font-bold">Albums</h1>
           <p className="mt-1 text-muted-foreground">
-            Tes ecoutes et impressions
+            Tes écoutes et impressions
           </p>
         </div>
         <button
@@ -55,7 +55,7 @@ export function AlbumsView({ initialReviews, userPlan }: AlbumsViewProps) {
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          Mes ecoutes ({reviews.length})
+          Mes écoutes ({reviews.length})
         </button>
         <button
           onClick={() => setActiveTab("recommendations")}
@@ -92,7 +92,7 @@ export function AlbumsView({ initialReviews, userPlan }: AlbumsViewProps) {
               </div>
               <h3 className="mb-2 text-lg font-semibold">Aucun album</h3>
               <p className="mb-6 max-w-sm text-center text-muted-foreground">
-                Ajoute les albums que tu as ecoutes, note-les et partage ton avis
+                Ajoute les albums que tu as écoutés, note-les et partage ton avis
               </p>
               <button
                 onClick={() => setIsAddModalOpen(true)}

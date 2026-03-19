@@ -168,7 +168,7 @@ export function CreateBandModal({
               disabled={saving || !name.trim()}
               className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
             >
-              {saving ? "Creation..." : "Creer le groupe"}
+              {saving ? "Création..." : "Créer le groupe"}
             </button>
           </div>
         </form>

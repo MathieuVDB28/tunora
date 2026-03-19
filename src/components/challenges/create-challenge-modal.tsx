@@ -35,8 +35,8 @@ const CHALLENGE_TYPES: { value: ChallengeType; label: string; description: strin
   },
   {
     value: "song_mastery",
-    label: "Maitrise de morceau",
-    description: "Le premier a maitriser le morceau gagne",
+    label: "Maîtrise de morceau",
+    description: "Le premier à maîtriser le morceau gagne",
     icon: (
       <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -86,12 +86,12 @@ export function CreateChallengeModal({
     setError(null);
 
     if (!selectedFriend) {
-      setError("Selectionne un ami");
+      setError("Sélectionne un ami");
       return;
     }
 
     if (challengeType === "song_mastery" && !selectedSong) {
-      setError("Selectionne un morceau");
+      setError("Sélectionne un morceau");
       return;
     }
 
@@ -105,7 +105,7 @@ export function CreateChallengeModal({
     });
 
     if (!result.success) {
-      setError(result.error || "Erreur lors de la creation");
+      setError(result.error || "Erreur lors de la création");
       setIsLoading(false);
       return;
     }
@@ -129,13 +129,13 @@ export function CreateChallengeModal({
           </svg>
         </button>
 
-        <h2 className="mb-6 text-xl font-bold">Nouveau defi</h2>
+        <h2 className="mb-6 text-xl font-bold">Nouveau défi</h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Sélection de l'ami */}
           <div>
             <label className="mb-2 block text-sm font-medium">
-              Defier un ami
+              Défier un ami
             </label>
             <select
               value={selectedFriend}
@@ -154,7 +154,7 @@ export function CreateChallengeModal({
           {/* Type de challenge */}
           <div>
             <label className="mb-2 block text-sm font-medium">
-              Type de defi
+              Type de défi
             </label>
             <div className="space-y-2">
               {CHALLENGE_TYPES.map((type) => (
@@ -192,11 +192,11 @@ export function CreateChallengeModal({
           {challengeType === "song_mastery" && (
             <div>
               <label className="mb-2 block text-sm font-medium">
-                Morceau a maitriser
+                Morceau à maîtriser
               </label>
               {availableSongs.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Tu n'as pas de morceau non maitrise. Ajoute-en un dans ta bibliotheque !
+                  Tu n'as pas de morceau non maîtrisé. Ajoute-en un dans ta bibliothèque !
                 </p>
               ) : (
                 <select
@@ -218,7 +218,7 @@ export function CreateChallengeModal({
           {/* Durée */}
           <div>
             <label className="mb-2 block text-sm font-medium">
-              Duree du defi
+              Durée du défi
             </label>
             <div className="flex flex-wrap gap-2">
               {DURATION_PRESETS.map((preset) => (
@@ -249,7 +249,7 @@ export function CreateChallengeModal({
             disabled={isLoading || !selectedFriend || (challengeType === "song_mastery" && !selectedSong)}
             className="w-full rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-50"
           >
-            {isLoading ? "Envoi en cours..." : "Envoyer le defi"}
+            {isLoading ? "Envoi en cours..." : "Envoyer le défi"}
           </button>
         </form>
       </div>

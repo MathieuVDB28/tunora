@@ -33,10 +33,10 @@ const moreSections = [
     ],
   },
   {
-    label: "Entrainement",
+    label: "Entraînement",
     items: [
       { href: "/progress", label: "Progression", icon: "chart" },
-      { href: "/challenges", label: "Defis", icon: "trophy" },
+      { href: "/challenges", label: "Défis", icon: "trophy" },
     ],
   },
   {

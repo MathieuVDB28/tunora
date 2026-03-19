@@ -24,7 +24,7 @@ export function FeedView({ initialActivities, currentUserId }: FeedViewProps) {
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Feed</h1>
         <p className="mt-1 text-muted-foreground">
-          Activite recente de tes amis
+          Activité récente de tes amis
         </p>
       </div>
 
@@ -40,9 +40,9 @@ export function FeedView({ initialActivities, currentUserId }: FeedViewProps) {
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
             <span className="material-symbols-outlined text-3xl">feed</span>
           </div>
-          <h3 className="mb-2 text-lg font-semibold">Aucune activite</h3>
+          <h3 className="mb-2 text-lg font-semibold">Aucune activité</h3>
           <p className="mb-6 max-w-sm text-center text-muted-foreground">
-            Ajoute des amis pour voir leur activite dans ton feed
+            Ajoute des amis pour voir leur activité dans ton feed
           </p>
           <button
             onClick={() => router.push("/friends")}

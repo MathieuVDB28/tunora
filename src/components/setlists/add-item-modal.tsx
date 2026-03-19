@@ -301,7 +301,7 @@ export function AddItemModal({
               {/* Library search */}
               <div>
                 <label className="mb-2 block text-sm font-medium">
-                  Depuis ta bibliotheque
+                  Depuis ta bibliothèque
                 </label>
                 <div className="relative">
                   <svg
@@ -450,7 +450,7 @@ export function AddItemModal({
               {/* Preset sections */}
               <div>
                 <label className="mb-2 block text-sm font-medium">
-                  Sections predefinies
+                  Sections prédéfinies
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {SECTION_PRESETS.map((preset) => (
@@ -469,7 +469,7 @@ export function AddItemModal({
               {/* Custom section */}
               <div className="border-t border-border pt-4">
                 <label className="mb-2 block text-sm font-medium">
-                  Ou section personnalisee
+                  Ou section personnalisée
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -492,7 +492,7 @@ export function AddItemModal({
               {/* Duration */}
               <div>
                 <label className="mb-1 block text-sm font-medium">
-                  Duree (optionnel)
+                  Durée (optionnel)
                 </label>
                 <div className="flex items-center gap-2">
                   <input

@@ -52,9 +52,9 @@ export function ChallengesView({
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Defis</h1>
+          <h1 className="text-2xl font-bold">Défis</h1>
           <p className="text-muted-foreground">
-            Lance des defis à tes amis et grimpe dans le classement
+            Lance des défis à tes amis et grimpe dans le classement
           </p>
         </div>
         <button
@@ -89,7 +89,7 @@ export function ChallengesView({
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          Mes defis
+          Mes défis
           {myChallenges.length > 0 && (
             <span className="ml-2 rounded-full bg-primary/15 px-2 py-0.5 text-xs text-primary">
               {myChallenges.length}
@@ -128,9 +128,9 @@ export function ChallengesView({
         <div className="space-y-4">
           {myChallenges.length === 0 ? (
             <EmptyState
-              title="Aucun defi en cours"
-              description="Lance un defi a un ami pour commencer !"
-              actionLabel={friends.length > 0 ? "Creer un defi" : undefined}
+              title="Aucun défi en cours"
+              description="Lance un défi à un ami pour commencer !"
+              actionLabel={friends.length > 0 ? "Créer un défi" : undefined}
               onAction={() => setIsCreateModalOpen(true)}
             />
           ) : (
@@ -145,7 +145,7 @@ export function ChallengesView({
           {sentInvitations.length > 0 && (
             <div className="mt-8">
               <h2 className="mb-4 text-lg font-semibold text-muted-foreground">
-                Defis envoyes en attente
+                Défis envoyés en attente
               </h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {sentInvitations.map((challenge) => (

@@ -11,6 +11,8 @@ interface DashboardViewProps {
   stats: PracticeStats;
   recentSessions: PracticeSessionWithSong[];
   recentSetlists: SetlistWithDetails[];
+  albumsCount: number;
+  coversCount: number;
 }
 
 function formatMinutes(minutes: number): string {
@@ -27,6 +29,8 @@ export function DashboardView({
   masteredCount,
   stats,
   recentSetlists,
+  albumsCount,
+  coversCount,
 }: DashboardViewProps) {
   const currentFocus = learningSongs[0];
   const firstName = displayName.split(" ")[0];
@@ -106,7 +110,7 @@ export function DashboardView({
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="relative overflow-hidden rounded-2xl bg-card border border-border p-5">
           <div className="absolute -right-4 -bottom-4 h-20 w-20 rounded-full bg-accent-teal/20 blur-xl" />
           <div className="relative">
@@ -125,7 +129,7 @@ export function DashboardView({
               <span className="material-symbols-outlined text-accent-orange">emoji_events</span>
             </div>
             <p className="text-2xl font-extrabold">{masteredCount}</p>
-            <p className="text-sm text-muted-foreground">Morceaux maitrises</p>
+            <p className="text-sm text-muted-foreground">Morceaux maîtrisés</p>
           </div>
         </div>
 
@@ -148,6 +152,28 @@ export function DashboardView({
             </div>
             <p className="text-2xl font-extrabold">{stats.totalSessions}</p>
             <p className="text-sm text-muted-foreground">Sessions totales</p>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden rounded-2xl bg-card border border-border p-5">
+          <div className="absolute -right-4 -bottom-4 h-20 w-20 rounded-full bg-emerald-500/20 blur-xl" />
+          <div className="relative">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 mb-3">
+              <span className="material-symbols-outlined text-emerald-400">album</span>
+            </div>
+            <p className="text-2xl font-extrabold">{albumsCount}</p>
+            <p className="text-sm text-muted-foreground">Albums écoutés</p>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden rounded-2xl bg-card border border-border p-5">
+          <div className="absolute -right-4 -bottom-4 h-20 w-20 rounded-full bg-rose-500/20 blur-xl" />
+          <div className="relative">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 mb-3">
+              <span className="material-symbols-outlined text-rose-400">videocam</span>
+            </div>
+            <p className="text-2xl font-extrabold">{coversCount}</p>
+            <p className="text-sm text-muted-foreground">Covers postées</p>
           </div>
         </div>
       </div>

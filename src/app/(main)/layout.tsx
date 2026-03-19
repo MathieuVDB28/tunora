@@ -7,13 +7,13 @@ import { DesktopSidebar } from "@/components/layout/desktop-sidebar";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { href: "/library", label: "Bibliotheque", icon: "library" },
+  { href: "/library", label: "Bibliothèque", icon: "library" },
   { href: "/progress", label: "Progression", icon: "chart" },
   { href: "/practice", label: "Practice", icon: "metronome" },
   { href: "/covers", label: "Covers", icon: "video" },
   { href: "/albums", label: "Albums", icon: "album" },
   { href: "/setlists", label: "Setlists", icon: "setlist" },
-  { href: "/challenges", label: "Defis", icon: "trophy" },
+  { href: "/challenges", label: "Défis", icon: "trophy" },
   { href: "/friends", label: "Amis", icon: "users" },
   { href: "/feed", label: "Feed", icon: "feed" },
   { href: "/audio", label: "Audio", icon: "audio" },

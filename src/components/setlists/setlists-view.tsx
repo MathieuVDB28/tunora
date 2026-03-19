@@ -287,7 +287,7 @@ export function SetlistsView({
                 onClick={() => setShowCreateSetlist(true)}
                 className="mt-2 text-sm text-primary hover:underline"
               >
-                Creer ta premiere setlist
+                Créer ta première setlist
               </button>
             </div>
           )}

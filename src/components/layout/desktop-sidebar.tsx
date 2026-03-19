@@ -35,7 +35,7 @@ const sections: NavSection[] = [
     label: "Ma Musique",
     icon: "music_collection",
     items: [
-      { href: "/library", label: "Bibliotheque", icon: "library" },
+      { href: "/library", label: "Bibliothèque", icon: "library" },
       { href: "/albums", label: "Albums", icon: "album" },
       { href: "/covers", label: "Covers", icon: "video" },
       { href: "/setlists", label: "Setlists", icon: "setlist" },
@@ -43,12 +43,12 @@ const sections: NavSection[] = [
   },
   {
     id: "training",
-    label: "Entrainement",
+    label: "Entraînement",
     icon: "training",
     items: [
       { href: "/practice", label: "Practice", icon: "metronome" },
       { href: "/progress", label: "Progression", icon: "chart" },
-      { href: "/challenges", label: "Defis", icon: "trophy" },
+      { href: "/challenges", label: "Défis", icon: "trophy" },
     ],
   },
   {
@@ -316,7 +316,7 @@ export function DesktopSidebar({ navItems, userInfo }: DesktopSidebarProps) {
             type="submit"
             className="w-full rounded-xl border border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
-            Deconnexion
+            Déconnexion
           </button>
         </form>
       </div>

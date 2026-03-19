@@ -187,7 +187,7 @@ export function TabsSearchPanel({
           {results && results.length > 0 && (
             <div className="space-y-2">
               <h4 className="text-sm font-medium text-muted-foreground">
-                {results.length} resultat{results.length > 1 ? "s" : ""} trouve{results.length > 1 ? "s" : ""}
+                {results.length} résultat{results.length > 1 ? "s" : ""} trouvé{results.length > 1 ? "s" : ""}
               </h4>
               <div className="space-y-2">
                 {results.map((result, index) => (
