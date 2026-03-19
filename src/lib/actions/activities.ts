@@ -296,15 +296,14 @@ export async function getFeedActivities(
     .eq("status", "accepted")
     .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
 
-  if (!friendships || friendships.length === 0) {
-    return [];
-  }
-
-  const friendIds = friendships.map((f) =>
+  const friendIds = (friendships || []).map((f) =>
     f.requester_id === user.id ? f.addressee_id : f.requester_id
   );
 
-  // Récupérer les activités des amis
+  // Inclure l'utilisateur courant + ses amis
+  const feedUserIds = [user.id, ...friendIds];
+
+  // Récupérer les activités de l'utilisateur et de ses amis
   const { data: activities, error } = await supabase
     .from("activities")
     .select(
@@ -313,7 +312,7 @@ export async function getFeedActivities(
       user:profiles!user_id(id, username, display_name, avatar_url, plan)
     `
     )
-    .in("user_id", friendIds)
+    .in("user_id", feedUserIds)
     .order("created_at", { ascending: false })
     .limit(limit);
 

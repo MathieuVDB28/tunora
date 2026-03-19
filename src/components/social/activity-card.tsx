@@ -50,6 +50,8 @@ function ActivityIcon({ type }: { type: string }) {
 }
 
 export function ActivityCard({ activity, currentUserId }: ActivityCardProps) {
+  const isOwn = activity.user_id === currentUserId;
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -70,11 +72,17 @@ export function ActivityCard({ activity, currentUserId }: ActivityCardProps) {
   };
 
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
+    <div className={`rounded-xl border p-5 ${
+      isOwn
+        ? "border-primary/20 bg-primary/[0.03]"
+        : "border-border bg-card"
+    }`}>
       {/* Header with user info */}
       <div className="mb-3 flex items-center gap-3">
         {/* Avatar */}
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold text-primary">
+        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-semibold ${
+          isOwn ? "bg-primary/20 text-primary ring-2 ring-primary/30" : "bg-primary/10 text-primary"
+        }`}>
           {activity.user.avatar_url ? (
             <img
               src={activity.user.avatar_url}
@@ -94,7 +102,7 @@ export function ActivityCard({ activity, currentUserId }: ActivityCardProps) {
               <ActivityIcon type={activity.type} />
             </span>
             <span className="font-semibold">
-              {activity.user.display_name || activity.user.username}
+              {isOwn ? "Toi" : (activity.user.display_name || activity.user.username)}
             </span>
             <span className="text-muted-foreground">
               {activityMessages[activity.type]}
