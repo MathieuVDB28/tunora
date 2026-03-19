@@ -303,7 +303,7 @@ export interface FriendRequest {
 }
 
 // Types pour les activités
-export type ActivityType = 'song_added' | 'song_mastered' | 'cover_posted' | 'friend_added' | 'song_wishlisted' | 'setlist_created' | 'band_created' | 'band_joined' | 'challenge_created' | 'challenge_accepted' | 'challenge_completed' | 'challenge_won' | 'album_reviewed';
+export type ActivityType = 'song_added' | 'song_mastered' | 'cover_posted' | 'friend_added' | 'song_wishlisted' | 'setlist_created' | 'band_created' | 'band_joined' | 'challenge_created' | 'challenge_accepted' | 'challenge_completed' | 'challenge_won' | 'album_reviewed' | 'exercise_shared';
 
 export interface Activity {
   id: string;
@@ -826,6 +826,7 @@ export interface Exercise {
   video_url?: string;
   duration_minutes: number;
   is_system: boolean;
+  shared_with_friends: boolean;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -850,6 +851,8 @@ export interface UserExerciseWithExercise extends UserExercise {
 
 export interface ExerciseWithProgress extends Exercise {
   user_progress?: UserExercise;
+  creator_name?: string;
+  is_from_friend?: boolean;
 }
 
 export interface PracticeSessionExercise {
@@ -866,6 +869,21 @@ export interface CreateUserExerciseProgressInput {
   current_bpm: number;
   duration_minutes: number;
   bpm_achieved?: number;
+}
+
+export interface CreateExerciseInput {
+  name: string;
+  description?: string;
+  category: ExerciseCategory;
+  difficulty: ExerciseDifficulty;
+  starting_bpm: number;
+  target_bpm: number;
+  bpm_increment: number;
+  time_signature: string;
+  instructions: string[];
+  tips: string[];
+  duration_minutes: number;
+  shared_with_friends?: boolean;
 }
 
 // Types pour le Métronome

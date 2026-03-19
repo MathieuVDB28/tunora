@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createActivity } from "./activities";
 import type {
   Exercise,
   ExerciseWithProgress,
@@ -9,6 +10,7 @@ import type {
   ExerciseCategory,
   ExerciseDifficulty,
   CreateUserExerciseProgressInput,
+  CreateExerciseInput,
 } from "@/types";
 
 // =============================================
@@ -26,10 +28,10 @@ export async function getExercises(filters?: {
     return [];
   }
 
-  // Récupérer les exercices
+  // Récupérer les exercices avec le profil du créateur
   let query = supabase
     .from("exercises")
-    .select("*")
+    .select("*, creator:profiles!exercises_created_by_fkey(id, display_name, username)")
     .order("category")
     .order("difficulty")
     .order("name");
@@ -66,10 +68,16 @@ export async function getExercises(filters?: {
     });
   }
 
-  return (exercises as Exercise[]).map((exercise) => ({
-    ...exercise,
-    user_progress: progressMap.get(exercise.id),
-  }));
+  return exercises.map((exercise) => {
+    const creator = exercise.creator as { id: string; display_name: string; username: string } | null;
+    const isFromFriend = !exercise.is_system && exercise.created_by !== user.id && exercise.shared_with_friends;
+    return {
+      ...(exercise as Exercise),
+      user_progress: progressMap.get(exercise.id),
+      creator_name: creator?.display_name || creator?.username || undefined,
+      is_from_friend: isFromFriend,
+    };
+  });
 }
 
 export async function getExercise(id: string): Promise<ExerciseWithProgress | null> {
@@ -363,4 +371,150 @@ export async function getRecentlyPracticedExercises(
       updated_at: ue.updated_at,
     } as UserExercise,
   }));
+}
+
+// =============================================
+// Création d'exercices personnalisés
+// =============================================
+
+export async function createExercise(
+  input: CreateExerciseInput
+): Promise<{ success: boolean; error?: string; exercise?: Exercise }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Non authentifié" };
+  }
+
+  const { data, error } = await supabase
+    .from("exercises")
+    .insert({
+      name: input.name,
+      description: input.description || null,
+      category: input.category,
+      difficulty: input.difficulty,
+      starting_bpm: input.starting_bpm,
+      target_bpm: input.target_bpm,
+      bpm_increment: input.bpm_increment,
+      time_signature: input.time_signature,
+      instructions: input.instructions.filter(Boolean),
+      tips: input.tips.filter(Boolean),
+      duration_minutes: input.duration_minutes,
+      is_system: false,
+      shared_with_friends: input.shared_with_friends || false,
+      created_by: user.id,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating exercise:", error);
+    return { success: false, error: "Erreur lors de la création de l'exercice" };
+  }
+
+  // Notifier les amis si partagé
+  if (input.shared_with_friends && data) {
+    createActivity({
+      type: "exercise_shared",
+      reference_id: data.id,
+      metadata: { exercise_name: input.name },
+    }).catch(console.error);
+  }
+
+  revalidatePath("/practice");
+  return { success: true, exercise: data as Exercise };
+}
+
+// =============================================
+// Partager / Départager un exercice avec ses amis
+// =============================================
+
+export async function toggleShareExercise(
+  exerciseId: string
+): Promise<{ success: boolean; shared?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Non authentifié" };
+  }
+
+  // Récupérer l'exercice
+  const { data: exercise, error: fetchError } = await supabase
+    .from("exercises")
+    .select("id, created_by, is_system, shared_with_friends")
+    .eq("id", exerciseId)
+    .single();
+
+  if (fetchError || !exercise) {
+    return { success: false, error: "Exercice introuvable" };
+  }
+
+  if (exercise.is_system || exercise.created_by !== user.id) {
+    return { success: false, error: "Vous ne pouvez modifier que vos propres exercices" };
+  }
+
+  const newShared = !exercise.shared_with_friends;
+
+  const { error } = await supabase
+    .from("exercises")
+    .update({ shared_with_friends: newShared })
+    .eq("id", exerciseId);
+
+  if (error) {
+    console.error("Error toggling share:", error);
+    return { success: false, error: "Erreur lors de la mise à jour" };
+  }
+
+  // Notifier les amis quand on active le partage
+  if (newShared) {
+    // Récupérer le nom de l'exercice
+    const { data: exerciseData } = await supabase
+      .from("exercises")
+      .select("name")
+      .eq("id", exerciseId)
+      .single();
+
+    if (exerciseData) {
+      createActivity({
+        type: "exercise_shared",
+        reference_id: exerciseId,
+        metadata: { exercise_name: exerciseData.name },
+      }).catch(console.error);
+    }
+  }
+
+  revalidatePath("/practice");
+  return { success: true, shared: newShared };
+}
+
+// =============================================
+// Supprimer un exercice personnel
+// =============================================
+
+export async function deleteExercise(
+  exerciseId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Non authentifié" };
+  }
+
+  const { error } = await supabase
+    .from("exercises")
+    .delete()
+    .eq("id", exerciseId)
+    .eq("created_by", user.id)
+    .eq("is_system", false);
+
+  if (error) {
+    console.error("Error deleting exercise:", error);
+    return { success: false, error: "Erreur lors de la suppression" };
+  }
+
+  revalidatePath("/practice");
+  return { success: true };
 }

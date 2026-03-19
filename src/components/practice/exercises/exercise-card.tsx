@@ -33,10 +33,17 @@ export function ExerciseCard({ exercise, onClick }: ExerciseCardProps) {
       )
     : 0;
 
+  const isFromFriend = exercise.is_from_friend;
+  const isCustom = !exercise.is_system && !isFromFriend;
+
   return (
     <button
       onClick={onClick}
-      className="w-full rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/50 hover:shadow-lg"
+      className={`w-full rounded-xl border p-4 text-left transition-all hover:shadow-lg ${
+        isFromFriend
+          ? "border-violet-500/30 bg-card hover:border-violet-500/60"
+          : "border-border bg-card hover:border-primary/50"
+      }`}
     >
       {/* Header */}
       <div className="mb-2 flex items-start justify-between gap-2">
@@ -50,10 +57,25 @@ export function ExerciseCard({ exercise, onClick }: ExerciseCardProps) {
         </span>
       </div>
 
-      {/* Category */}
-      <p className="mb-3 text-xs text-muted-foreground">
-        {EXERCISE_CATEGORY_LABELS[exercise.category]}
-      </p>
+      {/* Category + Source badge */}
+      <div className="mb-3 flex items-center gap-2">
+        <p className="text-xs text-muted-foreground">
+          {EXERCISE_CATEGORY_LABELS[exercise.category]}
+        </p>
+        {isFromFriend && exercise.creator_name && (
+          <span className="flex items-center gap-1 rounded-full bg-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-400">
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            {exercise.creator_name}
+          </span>
+        )}
+        {isCustom && (
+          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
+            Perso
+          </span>
+        )}
+      </div>
 
       {/* BPM Progress */}
       <div className="mb-2 flex items-center justify-between text-sm">
@@ -66,7 +88,9 @@ export function ExerciseCard({ exercise, onClick }: ExerciseCardProps) {
       {/* Progress Bar */}
       <div className="mb-3 h-2 overflow-hidden rounded-full bg-accent">
         <div
-          className="h-full rounded-full bg-primary transition-all"
+          className={`h-full rounded-full transition-all ${
+            isFromFriend ? "bg-violet-500" : "bg-primary"
+          }`}
           style={{ width: `${progressPercent}%` }}
         />
       </div>

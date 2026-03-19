@@ -6,6 +6,7 @@ import { Metronome } from "./metronome/metronome";
 import { ExerciseList } from "./exercises/exercise-list";
 import { ExerciseDetailModal } from "./exercises/exercise-detail-modal";
 import { ExerciseProgress } from "./exercises/exercise-progress";
+import { CreateExerciseModal } from "./exercises/create-exercise-modal";
 import { SongSelector } from "./song-practice/song-selector";
 import { BpmTargetIndicator } from "./song-practice/bpm-target-indicator";
 import { updateUserExerciseProgress } from "@/lib/actions/exercises";
@@ -40,6 +41,7 @@ export function PracticeView({
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [selectedExercise, setSelectedExercise] = useState<ExerciseWithProgress | null>(null);
   const [exerciseModalOpen, setExerciseModalOpen] = useState(false);
+  const [createExerciseModalOpen, setCreateExerciseModalOpen] = useState(false);
 
   // Metronome state
   const [currentBpm, setCurrentBpm] = useState(120);
@@ -252,6 +254,7 @@ export function PracticeView({
                     setSelectedExercise(exercise);
                     setExerciseModalOpen(true);
                   }}
+                  onCreateExercise={() => setCreateExerciseModalOpen(true)}
                 />
               </div>
             )}
@@ -308,6 +311,12 @@ export function PracticeView({
           onStartPractice={handleStartExercisePractice}
         />
       )}
+
+      {/* Create Exercise Modal */}
+      <CreateExerciseModal
+        isOpen={createExerciseModalOpen}
+        onClose={() => setCreateExerciseModalOpen(false)}
+      />
     </div>
   );
 }

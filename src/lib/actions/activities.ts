@@ -131,6 +131,15 @@ function getNotificationForActivity(
         },
         notificationType: "album_reviewed",
       };
+    case "exercise_shared":
+      return {
+        payload: {
+          title: "Nouvel exercice partage",
+          body: `${userName} a partage l'exercice "${metadata?.exercise_name}"`,
+          data: { url: "/practice" },
+        },
+        notificationType: "exercise_shared",
+      };
     default:
       return null;
   }

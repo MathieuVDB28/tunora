@@ -45,7 +45,8 @@ export type NotificationType =
   | 'jam_session_started'
   | 'album_reviewed'
   | 'activity_reaction'
-  | 'activity_comment';
+  | 'activity_comment'
+  | 'exercise_shared';
 
 export async function sendPushNotification(
   userId: string,

@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { EXERCISE_CATEGORY_LABELS } from "@/types";
+import { toggleShareExercise, deleteExercise } from "@/lib/actions/exercises";
 import type { ExerciseWithProgress, ExerciseDifficulty } from "@/types";
 
 interface ExerciseDetailModalProps {
@@ -31,8 +33,15 @@ export function ExerciseDetailModal({
   onClose,
   onStartPractice,
 }: ExerciseDetailModalProps) {
+  const router = useRouter();
   const progress = exercise.user_progress;
   const startingBpm = progress?.current_bpm || exercise.starting_bpm;
+
+  const [sharing, setSharing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const isOwnExercise = !exercise.is_system && !exercise.is_from_friend;
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -50,6 +59,12 @@ export function ExerciseDetailModal({
     };
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setConfirmDelete(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const progressPercent = progress
@@ -60,6 +75,25 @@ export function ExerciseDetailModal({
           100
       )
     : 0;
+
+  const handleToggleShare = async () => {
+    setSharing(true);
+    await toggleShareExercise(exercise.id);
+    setSharing(false);
+    router.refresh();
+  };
+
+  const handleDelete = async () => {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setDeleting(true);
+    await deleteExercise(exercise.id);
+    setDeleting(false);
+    onClose();
+    router.refresh();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -75,7 +109,7 @@ export function ExerciseDetailModal({
         <div className="flex items-start justify-between border-b border-border p-4">
           <div className="flex-1 pr-4">
             <h2 className="text-lg font-semibold">{exercise.name}</h2>
-            <div className="mt-1 flex items-center gap-2">
+            <div className="mt-1 flex flex-wrap items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 {EXERCISE_CATEGORY_LABELS[exercise.category]}
               </span>
@@ -86,6 +120,19 @@ export function ExerciseDetailModal({
               >
                 {DIFFICULTY_LABELS[exercise.difficulty]}
               </span>
+              {exercise.is_from_friend && exercise.creator_name && (
+                <span className="flex items-center gap-1 rounded-full bg-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-400">
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Par {exercise.creator_name}
+                </span>
+              )}
+              {isOwnExercise && (
+                <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary">
+                  Mon exercice
+                </span>
+              )}
             </div>
           </div>
           <button
@@ -127,7 +174,9 @@ export function ExerciseDetailModal({
             </div>
             <div className="mb-2 h-2 overflow-hidden rounded-full bg-accent">
               <div
-                className="h-full rounded-full bg-primary transition-all"
+                className={`h-full rounded-full transition-all ${
+                  exercise.is_from_friend ? "bg-violet-500" : "bg-primary"
+                }`}
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -208,13 +257,67 @@ export function ExerciseDetailModal({
               Incrément: +{exercise.bpm_increment} BPM
             </span>
           </div>
+
+          {/* Share & Delete for own exercises */}
+          {isOwnExercise && (
+            <div className="mt-4 space-y-3">
+              {/* Share toggle */}
+              <div className="flex items-center justify-between rounded-lg border border-border bg-accent/30 p-3">
+                <div className="flex items-center gap-2">
+                  <svg className="h-5 w-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-sm font-medium">Partager avec mes amis</p>
+                    <p className="text-xs text-muted-foreground">
+                      {exercise.shared_with_friends
+                        ? "Vos amis peuvent voir cet exercice"
+                        : "Exercice privé"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleToggleShare}
+                  disabled={sharing}
+                  className={`relative h-6 w-11 rounded-full transition-colors disabled:opacity-50 ${
+                    exercise.shared_with_friends ? "bg-violet-500" : "bg-muted"
+                  }`}
+                >
+                  <span
+                    className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                      exercise.shared_with_friends ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Delete */}
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className={`w-full rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                  confirmDelete
+                    ? "border-red-500 bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                    : "border-border text-muted-foreground hover:border-red-500/50 hover:text-red-400"
+                }`}
+              >
+                {deleting
+                  ? "Suppression..."
+                  : confirmDelete
+                    ? "Confirmer la suppression"
+                    : "Supprimer cet exercice"}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
         <div className="border-t border-border p-4">
           <button
             onClick={() => onStartPractice(exercise, startingBpm)}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 font-semibold text-primary-foreground transition-colors hover:opacity-90"
+            className={`flex w-full items-center justify-center gap-2 rounded-lg py-3 font-semibold text-primary-foreground transition-colors hover:opacity-90 ${
+              exercise.is_from_friend ? "bg-violet-500" : "bg-primary"
+            }`}
           >
             <svg
               className="h-5 w-5"
