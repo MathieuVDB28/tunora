@@ -18,6 +18,59 @@ function verifyCronSecret(request: NextRequest): boolean {
   return authHeader === `Bearer ${cronSecret}`;
 }
 
+async function sendReminders(
+  rehearsals: Array<{
+    id: string;
+    title: string;
+    date: string;
+    location: string | null;
+    band: unknown;
+    participants: unknown;
+  }>,
+  type: "rehearsal_reminder" | "rehearsal_today",
+  titlePrefix: string
+): Promise<{ sent: number; errors: number }> {
+  let sent = 0;
+  let errors = 0;
+
+  for (const rehearsal of rehearsals) {
+    const participants = (
+      rehearsal.participants as { user_id: string; status: string }[]
+    ).filter((p) => p.status !== "declined");
+
+    if (participants.length === 0) continue;
+
+    const bandName =
+      (rehearsal.band as unknown as { name: string })?.name || "ton groupe";
+    const dateObj = new Date(rehearsal.date);
+    const timeStr = dateObj.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    try {
+      await sendPushNotificationToMultipleUsers(
+        participants.map((p) => ({
+          userId: p.user_id,
+          payload: {
+            title: titlePrefix,
+            body: `${rehearsal.title} avec ${bandName} a ${timeStr}${rehearsal.location ? ` - ${rehearsal.location}` : ""}`,
+            data: { url: `/setlists/rehearsals/${rehearsal.id}` },
+          },
+          notificationType: type,
+        }))
+      );
+      sent += participants.length;
+    } catch (err) {
+      console.error(`Error sending ${type}:`, err);
+      errors++;
+    }
+  }
+
+  return { sent, errors };
+}
+
+// Runs once daily at ~9h UTC. Sends both "today" and "tomorrow" reminders.
 export async function GET(request: NextRequest) {
   if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -26,114 +79,63 @@ export async function GET(request: NextRequest) {
   const now = new Date();
   const results = { reminders: 0, today: 0, errors: 0 };
 
-  // === J-1 Reminders (rehearsals tomorrow) ===
-  // Find rehearsals that are between 23h and 25h from now (covers the daily cron window)
+  // === Today's rehearsals (anything today that hasn't passed yet) ===
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(now);
+  todayEnd.setHours(23, 59, 59, 999);
+
+  const { data: todayRehearsals } = await supabaseAdmin
+    .from("rehearsals")
+    .select(
+      `
+      id, title, date, location,
+      band:bands(name),
+      participants:rehearsal_participants(user_id, status)
+    `
+    )
+    .eq("status", "scheduled")
+    .gte("date", now.toISOString())
+    .lte("date", todayEnd.toISOString());
+
+  if (todayRehearsals && todayRehearsals.length > 0) {
+    const r = await sendReminders(
+      todayRehearsals,
+      "rehearsal_today",
+      "Repet aujourd'hui !"
+    );
+    results.today = r.sent;
+    results.errors += r.errors;
+  }
+
+  // === Tomorrow's rehearsals ===
   const tomorrowStart = new Date(now);
-  tomorrowStart.setHours(now.getHours() + 23, 0, 0, 0);
-  const tomorrowEnd = new Date(now);
-  tomorrowEnd.setHours(now.getHours() + 25, 0, 0, 0);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  tomorrowStart.setHours(0, 0, 0, 0);
+  const tomorrowEnd = new Date(tomorrowStart);
+  tomorrowEnd.setHours(23, 59, 59, 999);
 
   const { data: tomorrowRehearsals } = await supabaseAdmin
     .from("rehearsals")
-    .select(`
+    .select(
+      `
       id, title, date, location,
       band:bands(name),
-      participants:rehearsal_participants(
-        user_id,
-        status
-      )
-    `)
+      participants:rehearsal_participants(user_id, status)
+    `
+    )
     .eq("status", "scheduled")
     .gte("date", tomorrowStart.toISOString())
     .lte("date", tomorrowEnd.toISOString());
 
-  if (tomorrowRehearsals) {
-    for (const rehearsal of tomorrowRehearsals) {
-      const participants = (rehearsal.participants as { user_id: string; status: string }[])
-        .filter((p) => p.status !== "declined");
-
-      if (participants.length === 0) continue;
-
-      const bandName = (rehearsal.band as unknown as { name: string })?.name || "ton groupe";
-      const dateObj = new Date(rehearsal.date);
-      const timeStr = dateObj.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-
-      try {
-        await sendPushNotificationToMultipleUsers(
-          participants.map((p) => ({
-            userId: p.user_id,
-            payload: {
-              title: "Repet demain !",
-              body: `${rehearsal.title} avec ${bandName} a ${timeStr}${rehearsal.location ? ` - ${rehearsal.location}` : ""}`,
-              data: { url: `/setlists/rehearsals/${rehearsal.id}` },
-            },
-            notificationType: "rehearsal_reminder" as const,
-          }))
-        );
-        results.reminders += participants.length;
-      } catch (err) {
-        console.error("Error sending reminder:", err);
-        results.errors++;
-      }
-    }
-  }
-
-  // === Day-of Reminders (rehearsals today) ===
-  // Find rehearsals in the next 0-2h window (for the "today" notification)
-  const todayStart = new Date(now);
-  todayStart.setHours(now.getHours(), 0, 0, 0);
-  const todayEnd = new Date(now);
-  todayEnd.setHours(now.getHours() + 2, 0, 0, 0);
-
-  // Only send "today" notifications for rehearsals happening later today (at least 2h from now)
-  const laterTodayStart = new Date(now);
-  laterTodayStart.setHours(now.getHours() + 2, 0, 0, 0);
-  const laterTodayEnd = new Date(now);
-  laterTodayEnd.setHours(23, 59, 59, 999);
-
-  const { data: todayRehearsals } = await supabaseAdmin
-    .from("rehearsals")
-    .select(`
-      id, title, date, location,
-      band:bands(name),
-      participants:rehearsal_participants(
-        user_id,
-        status
-      )
-    `)
-    .eq("status", "scheduled")
-    .gte("date", laterTodayStart.toISOString())
-    .lte("date", laterTodayEnd.toISOString());
-
-  if (todayRehearsals) {
-    for (const rehearsal of todayRehearsals) {
-      const participants = (rehearsal.participants as { user_id: string; status: string }[])
-        .filter((p) => p.status !== "declined");
-
-      if (participants.length === 0) continue;
-
-      const bandName = (rehearsal.band as unknown as { name: string })?.name || "ton groupe";
-      const dateObj = new Date(rehearsal.date);
-      const timeStr = dateObj.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-
-      try {
-        await sendPushNotificationToMultipleUsers(
-          participants.map((p) => ({
-            userId: p.user_id,
-            payload: {
-              title: "Repet aujourd'hui !",
-              body: `${rehearsal.title} avec ${bandName} a ${timeStr}${rehearsal.location ? ` - ${rehearsal.location}` : ""}`,
-              data: { url: `/setlists/rehearsals/${rehearsal.id}` },
-            },
-            notificationType: "rehearsal_today" as const,
-          }))
-        );
-        results.today += participants.length;
-      } catch (err) {
-        console.error("Error sending today notification:", err);
-        results.errors++;
-      }
-    }
+  if (tomorrowRehearsals && tomorrowRehearsals.length > 0) {
+    const r = await sendReminders(
+      tomorrowRehearsals,
+      "rehearsal_reminder",
+      "Repet demain !"
+    );
+    results.reminders = r.sent;
+    results.errors += r.errors;
   }
 
   return NextResponse.json({
