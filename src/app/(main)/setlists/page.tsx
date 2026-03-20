@@ -1,5 +1,6 @@
 import { getSetlists } from "@/lib/actions/setlists";
 import { getUserBands, getPendingBandInvitations } from "@/lib/actions/bands";
+import { getUpcomingRehearsals } from "@/lib/actions/rehearsals";
 import { createClient } from "@/lib/supabase/server";
 import { SetlistsView } from "@/components/setlists/setlists-view";
 
@@ -20,10 +21,11 @@ export default async function SetlistsPage() {
     .eq("id", user.id)
     .single();
 
-  const [setlists, bands, pendingInvitations] = await Promise.all([
+  const [setlists, bands, pendingInvitations, rehearsals] = await Promise.all([
     getSetlists(),
     getUserBands(),
     getPendingBandInvitations(),
+    getUpcomingRehearsals(),
   ]);
 
   return (
@@ -33,6 +35,7 @@ export default async function SetlistsPage() {
       pendingInvitations={pendingInvitations}
       userPlan={profile?.plan || "free"}
       currentUserId={user.id}
+      initialRehearsals={rehearsals}
     />
   );
 }

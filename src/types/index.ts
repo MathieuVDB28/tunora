@@ -1222,3 +1222,116 @@ export interface SpotifyRecommendation {
   release_date: string;
   total_tracks: number;
 }
+
+// =============================================
+// Types pour les Repetitions (Rehearsals)
+// =============================================
+export type RehearsalStatus = 'scheduled' | 'cancelled' | 'completed';
+export type RehearsalRsvpStatus = 'invited' | 'accepted' | 'declined' | 'maybe';
+export type RecurrenceType = 'none' | 'weekly' | 'biweekly' | 'monthly';
+
+export interface Rehearsal {
+  id: string;
+  band_id: string;
+  setlist_id: string | null;
+  created_by: string;
+  title: string;
+  description?: string;
+  location?: string;
+  location_url?: string;
+  date: string;
+  end_date?: string;
+  status: RehearsalStatus;
+  recurrence: RecurrenceType;
+  recurrence_day_of_week?: number;
+  recurrence_end_date?: string;
+  parent_rehearsal_id?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RehearsalParticipant {
+  id: string;
+  rehearsal_id: string;
+  user_id: string;
+  status: RehearsalRsvpStatus;
+  responded_at?: string;
+}
+
+export interface RehearsalParticipantWithProfile extends RehearsalParticipant {
+  profile: Profile;
+}
+
+export interface RehearsalWithDetails extends Rehearsal {
+  band: Band;
+  setlist?: Setlist | null;
+  participants: RehearsalParticipantWithProfile[];
+  creator: Profile;
+  message_count?: number;
+}
+
+export interface CreateRehearsalInput {
+  band_id: string;
+  setlist_id?: string;
+  title: string;
+  description?: string;
+  location?: string;
+  location_url?: string;
+  date: string;
+  end_date?: string;
+  participant_ids: string[];
+  recurrence: RecurrenceType;
+  recurrence_end_date?: string;
+}
+
+export interface UpdateRehearsalInput {
+  title?: string;
+  description?: string;
+  location?: string;
+  location_url?: string;
+  date?: string;
+  end_date?: string;
+  setlist_id?: string | null;
+  notes?: string;
+  status?: RehearsalStatus;
+}
+
+// Labels pour la recurrence
+export const RECURRENCE_LABELS: Record<RecurrenceType, string> = {
+  none: 'Unique',
+  weekly: 'Chaque semaine',
+  biweekly: 'Toutes les 2 semaines',
+  monthly: 'Chaque mois',
+};
+
+// Labels pour le RSVP
+export const RSVP_LABELS: Record<RehearsalRsvpStatus, string> = {
+  invited: 'En attente',
+  accepted: 'Presente',
+  declined: 'Absente',
+  maybe: 'Peut-etre',
+};
+
+export const RSVP_COLORS: Record<RehearsalRsvpStatus, string> = {
+  invited: 'bg-zinc-500/20 text-zinc-400',
+  accepted: 'bg-green-500/20 text-green-400',
+  declined: 'bg-red-500/20 text-red-400',
+  maybe: 'bg-yellow-500/20 text-yellow-400',
+};
+
+// =============================================
+// Types pour la Messagerie de Groupe (Band Chat)
+// =============================================
+export interface BandMessage {
+  id: string;
+  band_id: string;
+  rehearsal_id: string | null;
+  user_id: string;
+  content: string;
+  created_at: string;
+}
+
+export interface BandMessageWithProfile extends BandMessage {
+  profile: Profile;
+}

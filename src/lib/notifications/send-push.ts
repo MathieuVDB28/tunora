@@ -46,7 +46,12 @@ export type NotificationType =
   | 'album_reviewed'
   | 'activity_reaction'
   | 'activity_comment'
-  | 'exercise_shared';
+  | 'exercise_shared'
+  | 'rehearsal_created'
+  | 'rehearsal_updated'
+  | 'rehearsal_reminder'
+  | 'rehearsal_today'
+  | 'band_message';
 
 export async function sendPushNotification(
   userId: string,

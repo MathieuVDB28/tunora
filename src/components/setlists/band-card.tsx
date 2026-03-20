@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { leaveBand, deleteBand, removeBandMember } from "@/lib/actions/bands";
 import { getActiveJamSession } from "@/lib/actions/jam-sessions";
+import { getBandRehearsals } from "@/lib/actions/rehearsals";
 import { InviteMemberModal } from "./invite-member-modal";
 import { StartJamModal } from "@/components/jam/start-jam-modal";
-import type { BandWithMembers, JamSession } from "@/types";
+import type { BandWithMembers, JamSession, RehearsalWithDetails } from "@/types";
 
 interface BandCardProps {
   band: BandWithMembers;
@@ -21,17 +22,26 @@ export function BandCard({ band, currentUserId, onUpdate }: BandCardProps) {
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [activeJam, setActiveJam] = useState<JamSession | null>(null);
+  const [nextRehearsal, setNextRehearsal] = useState<RehearsalWithDetails | null>(null);
 
   const isOwner = band.owner_id === currentUserId;
   const memberCount = band.members.length;
 
-  // Check for active jam session
+  // Check for active jam session + next rehearsal
   useEffect(() => {
     async function checkActiveJam() {
       const session = await getActiveJamSession(band.id);
       setActiveJam(session);
     }
+    async function checkNextRehearsal() {
+      const rehearsals = await getBandRehearsals(band.id);
+      const upcoming = rehearsals.find(
+        (r) => r.status === "scheduled" && new Date(r.date) >= new Date()
+      );
+      setNextRehearsal(upcoming || null);
+    }
     checkActiveJam();
+    checkNextRehearsal();
   }, [band.id]);
 
   const handleLeave = async () => {
@@ -194,6 +204,36 @@ export function BandCard({ band, currentUserId, onUpdate }: BandCardProps) {
                 ))}
               </div>
             </div>
+
+            {/* Next rehearsal */}
+            {nextRehearsal && (
+              <div className="mb-4">
+                <h4 className="mb-2 text-sm font-medium">Prochaine repet</h4>
+                <Link
+                  href={`/setlists/rehearsals/${nextRehearsal.id}`}
+                  className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 transition-colors hover:bg-primary/10"
+                >
+                  <div className="flex h-10 w-10 flex-shrink-0 flex-col items-center justify-center rounded-lg bg-primary/20 text-primary">
+                    <span className="text-[10px] font-medium uppercase leading-none">
+                      {new Date(nextRehearsal.date).toLocaleDateString("fr-FR", { weekday: "short" })}
+                    </span>
+                    <span className="text-base font-bold leading-tight">
+                      {new Date(nextRehearsal.date).getDate()}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{nextRehearsal.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(nextRehearsal.date).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                      {nextRehearsal.location && ` - ${nextRehearsal.location}`}
+                    </p>
+                  </div>
+                  <span className="text-xs text-primary">
+                    {nextRehearsal.participants.filter((p) => p.status === "accepted").length}/{nextRehearsal.participants.length}
+                  </span>
+                </Link>
+              </div>
+            )}
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2">

@@ -7,10 +7,14 @@ import { CreateSetlistModal } from "./create-setlist-modal";
 import { CreateBandModal } from "./create-band-modal";
 import { BandCard } from "./band-card";
 import { BandInvitationCard } from "./band-invitation-card";
+import { RehearsalCard } from "@/components/rehearsals/rehearsal-card";
+import { RehearsalCalendar } from "@/components/rehearsals/rehearsal-calendar";
+import { CreateRehearsalModal } from "@/components/rehearsals/create-rehearsal-modal";
 import type {
   SetlistWithDetails,
   BandWithMembers,
   BandInvitationWithDetails,
+  RehearsalWithDetails,
   UserPlan,
 } from "@/types";
 
@@ -20,10 +24,12 @@ interface SetlistsViewProps {
   pendingInvitations: BandInvitationWithDetails[];
   userPlan: UserPlan;
   currentUserId: string;
+  initialRehearsals?: RehearsalWithDetails[];
 }
 
-type MainTab = "setlists" | "bands";
+type MainTab = "setlists" | "bands" | "rehearsals";
 type SetlistFilter = "all" | "personal" | "band";
+type RehearsalView = "list" | "calendar";
 
 export function SetlistsView({
   initialSetlists,
@@ -31,15 +37,20 @@ export function SetlistsView({
   pendingInvitations: initialInvitations,
   userPlan,
   currentUserId,
+  initialRehearsals = [],
 }: SetlistsViewProps) {
   const router = useRouter();
   const [setlists, setSetlists] = useState(initialSetlists);
   const [bands, setBands] = useState(initialBands);
   const [invitations, setInvitations] = useState(initialInvitations);
+  const [rehearsals, setRehearsals] = useState(initialRehearsals);
   const [mainTab, setMainTab] = useState<MainTab>("setlists");
   const [filter, setFilter] = useState<SetlistFilter>("all");
+  const [rehearsalView, setRehearsalView] = useState<RehearsalView>("list");
   const [showCreateSetlist, setShowCreateSetlist] = useState(false);
   const [showCreateBand, setShowCreateBand] = useState(false);
+  const [showCreateRehearsal, setShowCreateRehearsal] = useState(false);
+  const [selectedBandForRehearsal, setSelectedBandForRehearsal] = useState<BandWithMembers | null>(null);
 
   // Sync with server data
   useEffect(() => {
@@ -53,6 +64,10 @@ export function SetlistsView({
   useEffect(() => {
     setInvitations(initialInvitations);
   }, [initialInvitations]);
+
+  useEffect(() => {
+    setRehearsals(initialRehearsals);
+  }, [initialRehearsals]);
 
   const hasBandPlan = userPlan === "band";
   const hasBands = bands.length > 0;
@@ -211,11 +226,138 @@ export function SetlistsView({
               {bands.length}
             </span>
           </button>
+          <button
+            onClick={() => setMainTab("rehearsals")}
+            className={`flex items-center gap-2 border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+              mainTab === "rehearsals"
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">event</span>
+            Repets
+            {rehearsals.length > 0 && (
+              <span
+                className={`ml-1 rounded-full px-2 py-0.5 text-xs ${
+                  mainTab === "rehearsals"
+                    ? "bg-primary/20 text-primary"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {rehearsals.length}
+              </span>
+            )}
+          </button>
         </div>
       )}
 
       {/* Content based on tab */}
-      {mainTab === "setlists" ? (
+      {mainTab === "rehearsals" ? (
+        <>
+          {/* Rehearsals header */}
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex gap-1 rounded-lg bg-muted p-1">
+              <button
+                onClick={() => setRehearsalView("list")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  rehearsalView === "list"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">list</span>
+                Liste
+              </button>
+              <button
+                onClick={() => setRehearsalView("calendar")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  rehearsalView === "calendar"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">calendar_month</span>
+                Calendrier
+              </button>
+            </div>
+            {bands.length > 0 && (
+              <div className="relative">
+                {bands.length === 1 ? (
+                  <button
+                    onClick={() => {
+                      setSelectedBandForRehearsal(bands[0]);
+                      setShowCreateRehearsal(true);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">add</span>
+                    Nouvelle repet
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    {bands.map((band) => (
+                      <button
+                        key={band.id}
+                        onClick={() => {
+                          setSelectedBandForRehearsal(band);
+                          setShowCreateRehearsal(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">add</span>
+                        {band.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {rehearsalView === "list" ? (
+            rehearsals.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {rehearsals.map((rehearsal) => (
+                  <RehearsalCard
+                    key={rehearsal.id}
+                    rehearsal={rehearsal}
+                    currentUserId={currentUserId}
+                    onClick={() => router.push(`/setlists/rehearsals/${rehearsal.id}`)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                  <span className="material-symbols-outlined text-2xl text-muted-foreground">event</span>
+                </div>
+                <p className="text-muted-foreground">Aucune repetition planifiee</p>
+                {bands.length > 0 ? (
+                  <button
+                    onClick={() => {
+                      setSelectedBandForRehearsal(bands[0]);
+                      setShowCreateRehearsal(true);
+                    }}
+                    className="mt-2 text-sm text-primary hover:underline"
+                  >
+                    Planifier ta premiere repet
+                  </button>
+                ) : (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Cree un groupe d&apos;abord pour planifier des repets
+                  </p>
+                )}
+              </div>
+            )
+          ) : (
+            <RehearsalCalendar
+              rehearsals={rehearsals}
+              currentUserId={currentUserId}
+              onRehearsalClick={(r) => router.push(`/setlists/rehearsals/${r.id}`)}
+            />
+          )}
+        </>
+      ) : mainTab === "setlists" ? (
         <>
           {/* Filter tabs for setlists */}
           {hasBands && (
@@ -346,6 +488,19 @@ export function SetlistsView({
         onClose={() => setShowCreateBand(false)}
         onSuccess={handleRefresh}
       />
+
+      {selectedBandForRehearsal && (
+        <CreateRehearsalModal
+          isOpen={showCreateRehearsal}
+          onClose={() => {
+            setShowCreateRehearsal(false);
+            setSelectedBandForRehearsal(null);
+          }}
+          onSuccess={handleRefresh}
+          band={selectedBandForRehearsal}
+          setlists={setlists.filter((s) => s.band_id === selectedBandForRehearsal.id)}
+        />
+      )}
     </div>
   );
 }
