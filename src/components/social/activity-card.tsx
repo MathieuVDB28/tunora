@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { ActivityWithDetails } from "@/types";
 import { ActivityReactions } from "./activity-reactions";
 import { ActivityComments } from "./activity-comments";
@@ -51,6 +52,7 @@ function ActivityIcon({ type }: { type: string }) {
 
 export function ActivityCard({ activity, currentUserId }: ActivityCardProps) {
   const isOwn = activity.user_id === currentUserId;
+  const [playing, setPlaying] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -145,26 +147,42 @@ export function ActivityCard({ activity, currentUserId }: ActivityCardProps) {
       {activity.type === "cover_posted" && activity.cover && (
         <div className="overflow-hidden rounded-xl bg-accent/30">
           <div className="relative aspect-video bg-muted">
-            {activity.cover.thumbnail_url ? (
-              <img
-                src={activity.cover.thumbnail_url}
-                alt={`Cover de ${activity.cover.song.title}`}
-                className="h-full w-full object-cover"
-              />
-            ) : (
+            {playing ? (
               <video
                 src={activity.cover.media_url}
-                className="h-full w-full object-cover"
-                muted
-                preload="metadata"
+                className="h-full w-full"
+                controls
+                autoPlay
+                playsInline
               />
+            ) : (
+              <button
+                type="button"
+                className="block h-full w-full cursor-pointer"
+                onClick={() => setPlaying(true)}
+              >
+                {activity.cover.thumbnail_url ? (
+                  <img
+                    src={activity.cover.thumbnail_url}
+                    alt={`Cover de ${activity.cover.song.title}`}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <video
+                    src={activity.cover.media_url}
+                    className="h-full w-full object-cover"
+                    muted
+                    playsInline
+                    preload="metadata"
+                  />
+                )}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white transition-transform hover:scale-110">
+                    <span className="material-symbols-outlined text-3xl">play_arrow</span>
+                  </div>
+                </div>
+              </button>
             )}
-            {/* Play icon overlay */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 text-white transition-transform hover:scale-110">
-                <span className="material-symbols-outlined text-3xl">play_arrow</span>
-              </div>
-            </div>
           </div>
           <div className="p-3">
             <div className="font-semibold">{activity.cover.song.title}</div>
