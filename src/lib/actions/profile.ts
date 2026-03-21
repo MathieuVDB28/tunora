@@ -11,6 +11,12 @@ import type {
   Profile,
   FavoriteSong,
   FavoriteAlbum,
+  Song,
+  WishlistSong,
+  PlaylistWithSongs,
+  AlbumReview,
+  PracticeSessionWithSong,
+  CoverWithSong,
 } from "@/types";
 
 /**
@@ -202,25 +208,36 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
   const canViewPrivateContent = isOwner || !profile.is_private || isFriend;
 
   // Initialiser les données conditionnelles
-  let favoriteSongs = null;
-  let favoriteAlbums = null;
-  let recentSongs = null;
-  let totalSongs = null;
-  let masteredSongs = null;
+  let favoriteSongs: FavoriteSong[] | null = null;
+  let favoriteAlbums: FavoriteAlbum[] | null = null;
+  let recentSongs: Song[] | null = null;
+  let allSongs: Song[] | null = null;
+  let wishlist: WishlistSong[] | null = null;
+  let playlists: PlaylistWithSongs[] | null = null;
+  let albumReviews: AlbumReview[] | null = null;
+  let practiceStats = null;
+  let recentSessions: PracticeSessionWithSong[] | null = null;
+  let totalSongs: number | null = null;
+  let masteredSongs: number | null = null;
+  let totalAlbumReviews = 0;
 
   if (canViewPrivateContent) {
-    // Récupérer les favoris et morceaux si autorisé
-    const [favSongsData, favAlbumsData, songsData, songsCountData, masteredCountData] = await Promise.all([
+    const [
+      favSongsData,
+      favAlbumsData,
+      allSongsData,
+      recentSongsData,
+      songsCountData,
+      masteredCountData,
+      wishlistData,
+      playlistsData,
+      albumReviewsData,
+      sessionsData,
+      recentSessionsData,
+    ] = await Promise.all([
       supabase
         .from("favorite_songs")
-        .select(`
-          id,
-          user_id,
-          song_id,
-          position,
-          created_at,
-          song:songs(*)
-        `)
+        .select(`id, user_id, song_id, position, created_at, song:songs(*)`)
         .eq("user_id", userId)
         .order("position"),
       supabase
@@ -228,6 +245,11 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
         .select("*")
         .eq("user_id", userId)
         .order("position"),
+      supabase
+        .from("songs")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
       supabase
         .from("songs")
         .select("*")
@@ -243,9 +265,35 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId)
         .eq("status", "mastered"),
+      supabase
+        .from("wishlist_songs")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("playlists")
+        .select(`*, playlist_songs(*, song:songs(*))`)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("album_reviews")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("practice_sessions")
+        .select("duration_minutes, practiced_at")
+        .eq("user_id", userId)
+        .order("practiced_at", { ascending: false }),
+      supabase
+        .from("practice_sessions")
+        .select(`*, song:songs(*)`)
+        .eq("user_id", userId)
+        .order("practiced_at", { ascending: false })
+        .limit(5),
     ]);
 
-    // Mapper les favorite songs pour convertir song de tableau à objet
+    // Mapper les favorite songs
     const mappedFavSongs = (favSongsData.data || []).map((fs: any) => ({
       ...fs,
       song: Array.isArray(fs.song) ? fs.song[0] : fs.song,
@@ -253,9 +301,74 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
 
     favoriteSongs = mappedFavSongs as FavoriteSong[];
     favoriteAlbums = (favAlbumsData.data as FavoriteAlbum[]) || [];
-    recentSongs = songsData.data || [];
+    allSongs = (allSongsData.data as Song[]) || [];
+    recentSongs = (recentSongsData.data as Song[]) || [];
     totalSongs = songsCountData.count || 0;
     masteredSongs = masteredCountData.count || 0;
+    wishlist = (wishlistData.data as WishlistSong[]) || [];
+    albumReviews = (albumReviewsData.data as AlbumReview[]) || [];
+    totalAlbumReviews = albumReviews.length;
+
+    // Map playlists with song count
+    playlists = (playlistsData.data || []).map((pl: any) => {
+      const songs = (pl.playlist_songs || [])
+        .sort((a: any, b: any) => a.position - b.position)
+        .map((ps: any) => (Array.isArray(ps.song) ? ps.song[0] : ps.song))
+        .filter(Boolean);
+      return { ...pl, songs, song_count: songs.length, playlist_songs: undefined };
+    }) as PlaylistWithSongs[];
+
+    // Map recent sessions
+    recentSessions = (recentSessionsData.data || []).map((s: any) => ({
+      ...s,
+      song: Array.isArray(s.song) ? s.song[0] : s.song,
+    })) as PracticeSessionWithSong[];
+
+    // Compute practice stats (streak + totals)
+    const sessions = sessionsData.data || [];
+    const totalSessions = sessions.length;
+    const totalMinutes = sessions.reduce((sum: number, s: any) => sum + (s.duration_minutes || 0), 0);
+
+    const startOfWeek = new Date();
+    startOfWeek.setHours(0, 0, 0, 0);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    const minutesThisWeek = sessions
+      .filter((s: any) => new Date(s.practiced_at) >= startOfWeek)
+      .reduce((sum: number, s: any) => sum + (s.duration_minutes || 0), 0);
+
+    // Streak calculation
+    const uniqueDays = [...new Set(
+      sessions.map((s: any) => new Date(s.practiced_at).toDateString())
+    )].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+    let currentStreak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < uniqueDays.length; i++) {
+      const dayDate = new Date(uniqueDays[i]);
+      dayDate.setHours(0, 0, 0, 0);
+
+      if (i === 0) {
+        const diffDays = Math.floor((today.getTime() - dayDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays <= 1) {
+          currentStreak = 1;
+        } else {
+          break;
+        }
+      } else {
+        const prevDate = new Date(uniqueDays[i - 1]);
+        prevDate.setHours(0, 0, 0, 0);
+        const diffDays = Math.floor((prevDate.getTime() - dayDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (diffDays === 1) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+    }
+
+    practiceStats = { currentStreak, totalSessions, totalMinutes, minutesThisWeek };
   }
 
   // Récupérer les covers en respectant leur visibilité
@@ -269,29 +382,19 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
   const { data: covers, count: coversCount } = await supabase
     .from("covers")
     .select(`
-      id,
-      user_id,
-      song_id,
-      media_url,
-      media_type,
-      thumbnail_url,
-      duration_seconds,
-      file_size_bytes,
-      visibility,
-      description,
-      created_at,
+      id, user_id, song_id, media_url, media_type, thumbnail_url,
+      duration_seconds, file_size_bytes, visibility, description, created_at,
       song:songs(*)
     `, { count: "exact" })
     .eq("user_id", userId)
     .in("visibility", coversFilter)
-    .order("created_at", { ascending: false })
-    .limit(6);
+    .order("created_at", { ascending: false });
 
-  // Mapper les covers pour convertir song de tableau à objet
+  // Mapper les covers
   const mappedCovers = (covers || []).map((cover: any) => ({
     ...cover,
     song: Array.isArray(cover.song) ? cover.song[0] : cover.song,
-  }));
+  })) as CoverWithSong[];
 
   return {
     profile: profile as Profile,
@@ -299,10 +402,17 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
     favorite_albums: favoriteAlbums,
     recent_songs: recentSongs,
     recent_covers: mappedCovers,
+    all_songs: allSongs,
+    wishlist,
+    playlists,
+    album_reviews: albumReviews,
+    practice_stats: practiceStats,
+    recent_sessions: recentSessions,
     stats: {
       totalSongs,
       masteredSongs,
       totalCovers: coversCount || 0,
+      totalAlbumReviews,
     },
     friendship_status: friendshipStatus,
     is_friend: isFriend,

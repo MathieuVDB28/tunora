@@ -198,10 +198,22 @@ export interface PublicProfile {
   favorite_albums: FavoriteAlbum[] | null;
   recent_songs: Song[] | null;
   recent_covers: CoverWithSong[];
+  all_songs: Song[] | null;
+  wishlist: WishlistSong[] | null;
+  playlists: PlaylistWithSongs[] | null;
+  album_reviews: AlbumReview[] | null;
+  practice_stats: {
+    currentStreak: number;
+    totalSessions: number;
+    totalMinutes: number;
+    minutesThisWeek: number;
+  } | null;
+  recent_sessions: PracticeSessionWithSong[] | null;
   stats: {
     totalSongs: number | null;
     masteredSongs: number | null;
     totalCovers: number;
+    totalAlbumReviews: number;
   };
   friendship_status: FriendshipStatus | 'none' | 'self';
   is_friend: boolean;
