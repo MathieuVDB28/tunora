@@ -25,6 +25,7 @@ export interface Song {
   spotify_audio_fetched_at?: string;
   created_at: string;
   updated_at: string;
+  covers_count?: number;
 }
 
 export interface CreateSongInput {

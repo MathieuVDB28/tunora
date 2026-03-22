@@ -94,6 +94,12 @@ export function SongCard({ song, onClick }: SongCardProps) {
               Tab
             </span>
           )}
+          {(song.covers_count ?? 0) > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-medium text-amber-400">
+              <span className="material-symbols-outlined text-[13px]">videocam</span>
+              {song.covers_count}
+            </span>
+          )}
         </div>
       </div>
 

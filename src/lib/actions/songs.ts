@@ -16,7 +16,7 @@ export async function getSongs(): Promise<Song[]> {
 
   const { data, error } = await supabase
     .from("songs")
-    .select("*")
+    .select("*, covers(count)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -25,7 +25,11 @@ export async function getSongs(): Promise<Song[]> {
     return [];
   }
 
-  return data as Song[];
+  return (data || []).map((song) => ({
+    ...song,
+    covers: undefined,
+    covers_count: song.covers?.[0]?.count ?? 0,
+  })) as Song[];
 }
 
 export async function getSong(id: string): Promise<Song | null> {
