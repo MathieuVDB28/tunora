@@ -1348,3 +1348,59 @@ export interface BandMessage {
 export interface BandMessageWithProfile extends BandMessage {
   profile: Profile;
 }
+
+// =============================================
+// Types pour les Fiches Techniques (Tech Riders)
+// =============================================
+export interface TechRiderMusician {
+  id: string;
+  name: string;
+  instrument: string;
+  needs: string;
+  monitor: boolean;
+  monitor_notes?: string;
+  position_x: number;
+  position_y: number;
+}
+
+export interface TechRiderChannel {
+  id: string;
+  number: number;
+  source: string;
+  musician: string;
+  mic_type: string;
+  stand_type: string;
+  phantom: boolean;
+  notes?: string;
+}
+
+export interface TechRiderStageElement {
+  id: string;
+  type: 'monitor' | 'amp' | 'drums' | 'keyboard' | 'di_box' | 'mic_stand' | 'custom';
+  label: string;
+  x: number;
+  y: number;
+}
+
+export interface TechRider {
+  id: string;
+  band_id: string;
+  sound_engineer_name?: string;
+  sound_engineer_phone?: string;
+  musicians: TechRiderMusician[];
+  channels: TechRiderChannel[];
+  stage_elements: TechRiderStageElement[];
+  general_notes?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SaveTechRiderInput {
+  sound_engineer_name?: string;
+  sound_engineer_phone?: string;
+  musicians: TechRiderMusician[];
+  channels: TechRiderChannel[];
+  stage_elements: TechRiderStageElement[];
+  general_notes?: string;
+}
