@@ -1,4 +1,5 @@
 import { getUserAlbumReviews } from "@/lib/actions/albums";
+import { getAlbumWishlist } from "@/lib/actions/album-wishlist";
 import { createClient } from "@/lib/supabase/server";
 import { AlbumsView } from "@/components/albums/albums-view";
 
@@ -12,11 +13,15 @@ export default async function AlbumsPage() {
     .eq("id", user!.id)
     .single();
 
-  const reviews = await getUserAlbumReviews();
+  const [reviews, wishlist] = await Promise.all([
+    getUserAlbumReviews(),
+    getAlbumWishlist(),
+  ]);
 
   return (
     <AlbumsView
       initialReviews={reviews}
+      initialWishlist={wishlist}
       userPlan={profile?.plan || "free"}
     />
   );

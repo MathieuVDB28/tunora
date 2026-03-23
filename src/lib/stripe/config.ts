@@ -11,6 +11,7 @@ export interface PlanConfig {
     covers: number;
     friends: number;
     wishlist: number;
+    albumWishlist: number;
   };
   monthly?: {
     price: number;
@@ -35,6 +36,7 @@ export const PLANS: Record<UserPlan, PlanConfig> = {
       covers: 3,
       friends: 5,
       wishlist: 20,
+      albumWishlist: 20,
     },
   },
   pro: {

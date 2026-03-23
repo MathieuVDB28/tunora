@@ -1240,6 +1240,33 @@ export interface SpotifyRecommendation {
 }
 
 // =============================================
+// Types pour la Wishlist Albums
+// =============================================
+
+export interface AlbumWishlistItem {
+  id: string;
+  user_id: string;
+  album_name: string;
+  artist_name: string;
+  cover_url?: string;
+  spotify_id?: string;
+  spotify_url?: string;
+  release_date?: string;
+  total_tracks?: number;
+  created_at: string;
+}
+
+export interface CreateAlbumWishlistInput {
+  album_name: string;
+  artist_name: string;
+  cover_url?: string;
+  spotify_id?: string;
+  spotify_url?: string;
+  release_date?: string;
+  total_tracks?: number;
+}
+
+// =============================================
 // Types pour les Repetitions (Rehearsals)
 // =============================================
 export type RehearsalStatus = 'scheduled' | 'cancelled' | 'completed';

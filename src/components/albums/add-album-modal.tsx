@@ -8,9 +8,10 @@ interface AddAlbumModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdded: (review: AlbumReview) => void;
+  prefillAlbum?: SpotifyAlbum;
 }
 
-export function AddAlbumModal({ isOpen, onClose, onAdded }: AddAlbumModalProps) {
+export function AddAlbumModal({ isOpen, onClose, onAdded, prefillAlbum }: AddAlbumModalProps) {
   const [step, setStep] = useState<"search" | "review">("search");
   const [searchQuery, setSearchQuery] = useState("");
   const [results, setResults] = useState<SpotifyAlbum[]>([]);
@@ -31,8 +32,11 @@ export function AddAlbumModal({ isOpen, onClose, onAdded }: AddAlbumModalProps) 
       setRating(7);
       setReview("");
       setError("");
+    } else if (prefillAlbum) {
+      setSelectedAlbum(prefillAlbum);
+      setStep("review");
     }
-  }, [isOpen]);
+  }, [isOpen, prefillAlbum]);
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
