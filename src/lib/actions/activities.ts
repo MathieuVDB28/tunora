@@ -147,7 +147,7 @@ function getNotificationForActivity(
           body: `${userName} a ajouté "${metadata?.brand} ${metadata?.model}" à sa collection`,
           data: { url: "/feed" },
         },
-        notificationType: "gear_added" as NotificationType,
+        notificationType: "gear_added",
       };
     default:
       return null;
