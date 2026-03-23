@@ -38,6 +38,7 @@ const sections: NavSection[] = [
       { href: "/library", label: "Bibliothèque", icon: "library" },
       { href: "/albums", label: "Albums", icon: "album" },
       { href: "/covers", label: "Covers", icon: "video" },
+      { href: "/gear", label: "Matos", icon: "guitar" },
       { href: "/setlists", label: "Setlists", icon: "setlist" },
     ],
   },

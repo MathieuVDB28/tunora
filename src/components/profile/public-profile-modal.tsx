@@ -12,7 +12,11 @@ import type {
   CoverWithSong,
   PracticeSessionWithSong,
   SessionMood,
+  GearItem,
+  GearType,
+  GearCondition,
 } from "@/types";
+import { GEAR_TYPE_LABELS, GEAR_CONDITION_LABELS, GEAR_CONDITION_COLORS } from "@/types";
 import { SocialLinks } from "./social-links";
 import { FavoritesGrid } from "./favorites-grid";
 import { PrivacyBadge } from "./privacy-badge";
@@ -24,7 +28,7 @@ interface PublicProfileModalProps {
   onClose: () => void;
 }
 
-type MainTab = "library" | "albums" | "activity";
+type MainTab = "library" | "gear" | "albums" | "activity";
 type LibrarySubTab = "learning" | "mastered" | "wishlist" | "playlists";
 
 const statusLabels: Record<SongStatus, string> = {
@@ -352,9 +356,10 @@ export function PublicProfileModal({ userId, isOpen, onClose }: PublicProfileMod
 
                   {/* ===== FAVORITES (compact) ===== */}
                   {((profile.favorite_songs && profile.favorite_songs.length > 0) ||
-                    (profile.favorite_albums && profile.favorite_albums.length > 0)) && (
+                    (profile.favorite_albums && profile.favorite_albums.length > 0) ||
+                    (profile.favorite_gear && profile.favorite_gear.length > 0)) && (
                     <div className="border-b border-border px-6 py-4">
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {profile.favorite_songs && profile.favorite_songs.length > 0 && (
                           <div>
                             <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -371,6 +376,30 @@ export function PublicProfileModal({ userId, isOpen, onClose }: PublicProfileMod
                             <FavoritesGrid items={profile.favorite_albums} mode="view" type="albums" />
                           </div>
                         )}
+                        {profile.favorite_gear && profile.favorite_gear.length > 0 && (
+                          <div>
+                            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                              Matos favori
+                            </h4>
+                            <div className="space-y-2">
+                              {profile.favorite_gear.map((fg) => (
+                                <div key={fg.id} className="flex items-center gap-2 rounded-lg bg-accent/50 p-2">
+                                  {fg.gear?.image_url ? (
+                                    <img src={fg.gear.image_url} alt={fg.gear.model} className="h-8 w-8 rounded object-cover" />
+                                  ) : (
+                                    <div className="flex h-8 w-8 items-center justify-center rounded bg-primary/10 text-xs text-primary">
+                                      {GEAR_TYPE_LABELS[fg.gear?.type || "other"]?.[0]}
+                                    </div>
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-xs font-medium">{fg.gear?.brand} {fg.gear?.model}</p>
+                                    <p className="text-[10px] text-muted-foreground">{GEAR_TYPE_LABELS[fg.gear?.type || "other"]}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -381,6 +410,7 @@ export function PublicProfileModal({ userId, isOpen, onClose }: PublicProfileMod
                       {(
                         [
                           { key: "library", label: "Bibliothèque", icon: "library_music" },
+                          { key: "gear", label: "Matos", icon: "guitar" },
                           { key: "albums", label: "Albums", icon: "album" },
                           { key: "activity", label: "Activité", icon: "trending_up" },
                         ] as const
@@ -454,6 +484,68 @@ export function PublicProfileModal({ userId, isOpen, onClose }: PublicProfileMod
                             onTogglePlaylist={setExpandedPlaylist}
                             onSongClick={setSelectedSong}
                           />
+                        )}
+                      </div>
+                    )}
+
+                    {/* GEAR TAB */}
+                    {activeTab === "gear" && (
+                      <div>
+                        {profile.gear_items && profile.gear_items.length > 0 ? (
+                          <div className="space-y-3">
+                            {profile.gear_items.map((gear) => (
+                              <div
+                                key={gear.id}
+                                className="flex items-start gap-4 rounded-xl border border-border/50 bg-card p-4"
+                              >
+                                {/* Image */}
+                                <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
+                                  {gear.image_url ? (
+                                    <img src={gear.image_url} alt={gear.model} className="h-full w-full object-cover" />
+                                  ) : (
+                                    <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
+                                      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                        <path d="M19.5 3.5L20.5 4.5M20.5 4.5L21.5 3.5M20.5 4.5V7M14.5 9.5L17 7M17 7H20.5M17 7L14.5 4.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <path d="M12 10C12 10 10.5 11.5 9.5 12.5C8.5 13.5 7 15 7 17C7 19.2091 8.79086 21 11 21C13 21 14.5 19.5 15.5 18.5C16.5 17.5 18 16 18 14C18 12 16.5 10.5 15 9C13.5 7.5 12 6 12 4" strokeLinecap="round" strokeLinejoin="round"/>
+                                        <circle cx="11" cy="17" r="1.5"/>
+                                      </svg>
+                                    </div>
+                                  )}
+                                </div>
+                                {/* Info */}
+                                <div className="min-w-0 flex-1">
+                                  <h4 className="truncate text-sm font-semibold">{gear.brand} {gear.model}</h4>
+                                  <p className="text-xs text-muted-foreground">
+                                    {GEAR_TYPE_LABELS[gear.type]}
+                                    {gear.year ? ` · ${gear.year}` : ""}
+                                  </p>
+                                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                    {gear.condition && (
+                                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${GEAR_CONDITION_COLORS[gear.condition]}`}>
+                                        {GEAR_CONDITION_LABELS[gear.condition]}
+                                      </span>
+                                    )}
+                                    {gear.is_active && (
+                                      <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-medium text-green-400">
+                                        Actif
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="py-12 text-center">
+                            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                              <svg className="h-6 w-6 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <path d="M19.5 3.5L20.5 4.5M20.5 4.5L21.5 3.5M20.5 4.5V7M14.5 9.5L17 7M17 7H20.5M17 7L14.5 4.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M12 10C12 10 10.5 11.5 9.5 12.5C8.5 13.5 7 15 7 17C7 19.2091 8.79086 21 11 21C13 21 14.5 19.5 15.5 18.5C16.5 17.5 18 16 18 14C18 12 16.5 10.5 15 9C13.5 7.5 12 6 12 4" strokeLinecap="round" strokeLinejoin="round"/>
+                                <circle cx="11" cy="17" r="1.5"/>
+                              </svg>
+                            </div>
+                            <p className="text-sm text-muted-foreground">Pas de matériel partagé</p>
+                          </div>
                         )}
                       </div>
                     )}

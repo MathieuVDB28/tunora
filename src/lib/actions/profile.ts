@@ -11,6 +11,8 @@ import type {
   Profile,
   FavoriteSong,
   FavoriteAlbum,
+  FavoriteGear,
+  GearItem,
   Song,
   WishlistSong,
   PlaylistWithSongs,
@@ -138,6 +140,20 @@ export async function getMyProfile(): Promise<UserProfile | null> {
     .eq("user_id", user.id)
     .order("position");
 
+  // Récupérer le matériel favori
+  const { data: favoriteGear } = await supabase
+    .from("favorite_gear")
+    .select(`
+      id,
+      user_id,
+      gear_id,
+      position,
+      created_at,
+      gear:gear_items!gear_id(*)
+    `)
+    .eq("user_id", user.id)
+    .order("position");
+
   // Calculer les stats en parallèle
   const [songsCount, masteredCount, coversCount, friendsCount] = await Promise.all([
     supabase.from("songs").select("*", { count: "exact", head: true }).eq("user_id", user.id),
@@ -152,10 +168,17 @@ export async function getMyProfile(): Promise<UserProfile | null> {
     song: Array.isArray(fs.song) ? fs.song[0] : fs.song,
   }));
 
+  // Mapper les favorite gear pour convertir gear de tableau à objet
+  const mappedFavoriteGear = (favoriteGear || []).map((fg: any) => ({
+    ...fg,
+    gear: Array.isArray(fg.gear) ? fg.gear[0] : fg.gear,
+  }));
+
   return {
     ...(profile as Profile),
     favorite_songs: mappedFavoriteSongs as FavoriteSong[],
     favorite_albums: (favoriteAlbums || []) as FavoriteAlbum[],
+    favorite_gear: mappedFavoriteGear as FavoriteGear[],
     stats: {
       totalSongs: songsCount.count || 0,
       masteredSongs: masteredCount.count || 0,
@@ -210,6 +233,8 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
   // Initialiser les données conditionnelles
   let favoriteSongs: FavoriteSong[] | null = null;
   let favoriteAlbums: FavoriteAlbum[] | null = null;
+  let favoriteGearItems: FavoriteGear[] | null = null;
+  let gearItems: GearItem[] | null = null;
   let recentSongs: Song[] | null = null;
   let allSongs: Song[] | null = null;
   let wishlist: WishlistSong[] | null = null;
@@ -225,6 +250,8 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
     const [
       favSongsData,
       favAlbumsData,
+      favGearData,
+      gearItemsData,
       allSongsData,
       recentSongsData,
       songsCountData,
@@ -245,6 +272,17 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
         .select("*")
         .eq("user_id", userId)
         .order("position"),
+      supabase
+        .from("favorite_gear")
+        .select(`id, user_id, gear_id, position, created_at, gear:gear_items!gear_id(*)`)
+        .eq("user_id", userId)
+        .order("position"),
+      supabase
+        .from("gear_items")
+        .select("*")
+        .eq("user_id", userId)
+        .in("visibility", isOwner ? ["private", "friends", "public"] : isFriend ? ["friends", "public"] : ["public"])
+        .order("created_at", { ascending: false }),
       supabase
         .from("songs")
         .select("*")
@@ -301,6 +339,15 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
 
     favoriteSongs = mappedFavSongs as FavoriteSong[];
     favoriteAlbums = (favAlbumsData.data as FavoriteAlbum[]) || [];
+
+    // Mapper les favorite gear
+    const mappedFavGear = (favGearData.data || []).map((fg: any) => ({
+      ...fg,
+      gear: Array.isArray(fg.gear) ? fg.gear[0] : fg.gear,
+    }));
+    favoriteGearItems = mappedFavGear as FavoriteGear[];
+    gearItems = (gearItemsData.data as GearItem[]) || [];
+
     allSongs = (allSongsData.data as Song[]) || [];
     recentSongs = (recentSongsData.data as Song[]) || [];
     totalSongs = songsCountData.count || 0;
@@ -400,6 +447,8 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
     profile: profile as Profile,
     favorite_songs: favoriteSongs,
     favorite_albums: favoriteAlbums,
+    favorite_gear: favoriteGearItems,
+    gear_items: gearItems,
     recent_songs: recentSongs,
     recent_covers: mappedCovers,
     all_songs: allSongs,

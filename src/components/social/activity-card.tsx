@@ -24,6 +24,7 @@ const activityMessages: Record<string, string> = {
   challenge_completed: "a termin\u00e9 un d\u00e9fi",
   challenge_won: "a remport\u00e9 un d\u00e9fi !",
   album_reviewed: "a \u00e9cout\u00e9 un album",
+  gear_added: "a ajout\u00e9 du matos",
 };
 
 const activityIcons: Record<string, string> = {
@@ -40,6 +41,7 @@ const activityIcons: Record<string, string> = {
   challenge_completed: "emoji_events",
   challenge_won: "emoji_events",
   album_reviewed: "album",
+  gear_added: "guitar",
 };
 
 function ActivityIcon({ type }: { type: string }) {
@@ -297,6 +299,32 @@ export function ActivityCard({ activity, currentUserId }: ActivityCardProps) {
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {activity.type === "gear_added" && activity.metadata && (
+        <div className="flex items-center gap-3 rounded-xl bg-accent/30 p-3">
+          {activity.metadata.image_url ? (
+            <img
+              src={String(activity.metadata.image_url)}
+              alt={`${activity.metadata.brand} ${activity.metadata.model}`}
+              className="h-16 w-16 rounded-lg object-cover"
+            />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500">
+              <svg className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M19.5 3.5L20.5 4.5M20.5 4.5L21.5 3.5M20.5 4.5V7M14.5 9.5L17 7M17 7H20.5M17 7L14.5 4.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 10C12 10 10.5 11.5 9.5 12.5C8.5 13.5 7 15 7 17C7 19.2091 8.79086 21 11 21C13 21 14.5 19.5 15.5 18.5C16.5 17.5 18 16 18 14C18 12 16.5 10.5 15 9C13.5 7.5 12 6 12 4" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="11" cy="17" r="1.5"/>
+              </svg>
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="truncate font-semibold">{String(activity.metadata.brand)} {String(activity.metadata.model)}</div>
+            <div className="truncate text-sm text-muted-foreground">
+              {activity.metadata.type ? String(activity.metadata.type) : "Matériel"}
+            </div>
+          </div>
         </div>
       )}
 

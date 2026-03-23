@@ -184,6 +184,7 @@ export interface FavoriteAlbum {
 export interface UserProfile extends Profile {
   favorite_songs: FavoriteSong[];
   favorite_albums: FavoriteAlbum[];
+  favorite_gear: FavoriteGear[];
   stats: {
     totalSongs: number;
     masteredSongs: number;
@@ -197,6 +198,8 @@ export interface PublicProfile {
   profile: Profile;
   favorite_songs: FavoriteSong[] | null;
   favorite_albums: FavoriteAlbum[] | null;
+  favorite_gear: FavoriteGear[] | null;
+  gear_items: GearItem[] | null;
   recent_songs: Song[] | null;
   recent_covers: CoverWithSong[];
   all_songs: Song[] | null;
@@ -316,7 +319,7 @@ export interface FriendRequest {
 }
 
 // Types pour les activités
-export type ActivityType = 'song_added' | 'song_mastered' | 'cover_posted' | 'friend_added' | 'song_wishlisted' | 'setlist_created' | 'band_created' | 'band_joined' | 'challenge_created' | 'challenge_accepted' | 'challenge_completed' | 'challenge_won' | 'album_reviewed' | 'exercise_shared';
+export type ActivityType = 'song_added' | 'song_mastered' | 'cover_posted' | 'friend_added' | 'song_wishlisted' | 'setlist_created' | 'band_created' | 'band_joined' | 'challenge_created' | 'challenge_accepted' | 'challenge_completed' | 'challenge_won' | 'album_reviewed' | 'exercise_shared' | 'gear_added';
 
 export interface Activity {
   id: string;
@@ -1404,3 +1407,213 @@ export interface SaveTechRiderInput {
   stage_elements: TechRiderStageElement[];
   general_notes?: string;
 }
+
+// =============================================
+// Types pour le Matériel (Gear Library)
+// =============================================
+export type GearType = 'guitar' | 'bass' | 'amp' | 'effect' | 'accessory' | 'recording' | 'other';
+export type GearCondition = 'mint' | 'excellent' | 'good' | 'fair' | 'poor';
+export type GearVisibility = 'private' | 'friends' | 'public';
+export type GearPriority = 'low' | 'medium' | 'high';
+
+export interface GearItem {
+  id: string;
+  user_id: string;
+  type: GearType;
+  brand: string;
+  model: string;
+  year?: number;
+  color?: string;
+  serial_number?: string;
+  condition?: GearCondition;
+  purchase_price?: number;
+  purchase_date?: string;
+  image_url?: string;
+  notes?: string;
+  is_active: boolean;
+  visibility: GearVisibility;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateGearItemInput {
+  type: GearType;
+  brand: string;
+  model: string;
+  year?: number;
+  color?: string;
+  serial_number?: string;
+  condition?: GearCondition;
+  purchase_price?: number;
+  purchase_date?: string;
+  image_url?: string;
+  notes?: string;
+  is_active?: boolean;
+  visibility?: GearVisibility;
+}
+
+export interface UpdateGearItemInput {
+  type?: GearType;
+  brand?: string;
+  model?: string;
+  year?: number;
+  color?: string;
+  serial_number?: string;
+  condition?: GearCondition;
+  purchase_price?: number;
+  purchase_date?: string;
+  image_url?: string;
+  notes?: string;
+  is_active?: boolean;
+  visibility?: GearVisibility;
+}
+
+// Gear Setups (combinaisons de matériel)
+export interface GearSetup {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  cover_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GearSetupItem {
+  id: string;
+  setup_id: string;
+  gear_id: string;
+  position: number;
+  role?: string;
+  created_at: string;
+}
+
+export interface GearSetupItemWithGear extends GearSetupItem {
+  gear: GearItem;
+}
+
+export interface GearSetupWithItems extends GearSetup {
+  items: GearSetupItemWithGear[];
+}
+
+export interface CreateGearSetupInput {
+  name: string;
+  description?: string;
+  cover_url?: string;
+}
+
+export interface UpdateGearSetupInput {
+  name?: string;
+  description?: string;
+  cover_url?: string;
+}
+
+// Gear Wishlist
+export interface GearWishlistItem {
+  id: string;
+  user_id: string;
+  type: GearType;
+  brand: string;
+  model: string;
+  estimated_price?: number;
+  image_url?: string;
+  url?: string;
+  notes?: string;
+  priority: GearPriority;
+  created_at: string;
+}
+
+export interface CreateGearWishlistItemInput {
+  type: GearType;
+  brand: string;
+  model: string;
+  estimated_price?: number;
+  image_url?: string;
+  url?: string;
+  notes?: string;
+  priority?: GearPriority;
+}
+
+// Gear Favoris (profil, 4 max)
+export interface FavoriteGear {
+  id: string;
+  user_id: string;
+  gear_id: string;
+  position: number;
+  created_at: string;
+  gear: GearItem;
+}
+
+export interface SetFavoriteGearInput {
+  gear_id: string;
+  position: number; // 1-4
+}
+
+// Gear taggé sur une cover
+export interface CoverGear {
+  id: string;
+  cover_id: string;
+  gear_id: string;
+  created_at: string;
+  gear: GearItem;
+}
+
+// Labels pour les types de matériel
+export const GEAR_TYPE_LABELS: Record<GearType, string> = {
+  guitar: 'Guitare',
+  bass: 'Basse',
+  amp: 'Ampli',
+  effect: 'Pédale',
+  accessory: 'Accessoire',
+  recording: 'Enregistrement',
+  other: 'Autre',
+};
+
+export const GEAR_TYPE_ICONS: Record<GearType, string> = {
+  guitar: 'guitar',
+  bass: 'bass',
+  amp: 'amp',
+  effect: 'effect',
+  accessory: 'tune',
+  recording: 'mic',
+  other: 'more_horiz',
+};
+
+export const GEAR_CONDITION_LABELS: Record<GearCondition, string> = {
+  mint: 'Neuf',
+  excellent: 'Excellent',
+  good: 'Bon',
+  fair: 'Correct',
+  poor: 'Usé',
+};
+
+export const GEAR_CONDITION_COLORS: Record<GearCondition, string> = {
+  mint: 'bg-green-500/20 text-green-400',
+  excellent: 'bg-blue-500/20 text-blue-400',
+  good: 'bg-amber-500/20 text-amber-400',
+  fair: 'bg-orange-500/20 text-orange-400',
+  poor: 'bg-red-500/20 text-red-400',
+};
+
+export const GEAR_PRIORITY_LABELS: Record<GearPriority, string> = {
+  low: 'Basse',
+  medium: 'Moyenne',
+  high: 'Haute',
+};
+
+export const GEAR_PRIORITY_COLORS: Record<GearPriority, string> = {
+  low: 'bg-zinc-500/20 text-zinc-400',
+  medium: 'bg-amber-500/20 text-amber-400',
+  high: 'bg-red-500/20 text-red-400',
+};
+
+// Marques courantes pour l'autocomplétion
+export const GEAR_BRANDS: Record<GearType, string[]> = {
+  guitar: ['Fender', 'Gibson', 'PRS', 'Ibanez', 'Epiphone', 'Squier', 'Taylor', 'Martin', 'Yamaha', 'Gretsch', 'ESP', 'Jackson', 'Schecter', 'Suhr', 'Music Man', 'Rickenbacker', 'Guild', 'Takamine', 'Godin', 'Charvel', 'EVH', 'Cort', 'Lag', 'Vigier', 'Eastman'],
+  bass: ['Fender', 'Music Man', 'Ibanez', 'Yamaha', 'Rickenbacker', 'Warwick', 'Squier', 'Epiphone', 'Gibson', 'Spector', 'Sandberg', 'Dingwall', 'Lakland', 'G&L', 'Cort', 'Sterling'],
+  amp: ['Marshall', 'Fender', 'Vox', 'Mesa/Boogie', 'Orange', 'Blackstar', 'Boss', 'Roland', 'Line 6', 'Peavey', 'Hughes & Kettner', 'Kemper', 'Neural DSP', 'Positive Grid', 'Two-Rock', 'Friedman', 'Laney'],
+  effect: ['Boss', 'MXR', 'Electro-Harmonix', 'TC Electronic', 'Strymon', 'JHS', 'Walrus Audio', 'Way Huge', 'Dunlop', 'Eventide', 'Chase Bliss', 'EarthQuaker Devices', 'Keeley', 'Wampler', 'Fulltone', 'Line 6', 'Ibanez', 'ProCo', 'Zvex', 'Neural DSP'],
+  accessory: ['Ernie Ball', "D'Addario", 'Elixir', 'Dunlop', 'Shubb', 'Kyser', 'Planet Waves', 'Levy\'s', 'Mono', 'SKB', 'Hercules', 'Peterson', 'TC Electronic', 'Snark'],
+  recording: ['Focusrite', 'Universal Audio', 'PreSonus', 'Audient', 'MOTU', 'RME', 'Shure', 'Rode', 'Audio-Technica', 'Sennheiser', 'AKG', 'Neumann', 'Beyerdynamic', 'KRK', 'Yamaha', 'Adam Audio', 'JBL'],
+  other: [],
+};

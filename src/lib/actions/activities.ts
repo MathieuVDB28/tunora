@@ -140,6 +140,15 @@ function getNotificationForActivity(
         },
         notificationType: "exercise_shared",
       };
+    case "gear_added":
+      return {
+        payload: {
+          title: "Nouveau matos",
+          body: `${userName} a ajouté "${metadata?.brand} ${metadata?.model}" à sa collection`,
+          data: { url: "/feed" },
+        },
+        notificationType: "gear_added" as NotificationType,
+      };
     default:
       return null;
   }
