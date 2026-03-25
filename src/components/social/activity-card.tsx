@@ -24,6 +24,7 @@ const activityMessages: Record<string, string> = {
   challenge_completed: "a termin\u00e9 un d\u00e9fi",
   challenge_won: "a remport\u00e9 un d\u00e9fi !",
   album_reviewed: "a \u00e9cout\u00e9 un album",
+  album_wishlisted: "veut \u00e9couter un album",
   gear_added: "a ajout\u00e9 du matos \u00e0 sa collection",
 };
 
@@ -41,6 +42,7 @@ const activityIcons: Record<string, string> = {
   challenge_completed: "emoji_events",
   challenge_won: "emoji_events",
   album_reviewed: "album",
+  album_wishlisted: "bookmark",
   gear_added: "guitar",
 };
 
@@ -312,6 +314,29 @@ export function ActivityCard({ activity, currentUserId }: ActivityCardProps) {
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {activity.type === "album_wishlisted" && activity.albumWishlistItem && (
+        <div className="flex items-center gap-3 rounded-xl bg-accent/30 p-3">
+          {activity.albumWishlistItem.cover_url ? (
+            <img
+              src={activity.albumWishlistItem.cover_url}
+              alt={activity.albumWishlistItem.album_name}
+              className="h-16 w-16 rounded-lg object-cover"
+            />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
+              <span className="material-symbols-outlined text-3xl text-muted-foreground">album</span>
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="truncate font-semibold">{activity.albumWishlistItem.album_name}</div>
+            <div className="truncate text-sm text-muted-foreground">{activity.albumWishlistItem.artist_name}</div>
+          </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/20 text-amber-500">
+            <span className="material-symbols-outlined text-[18px]">bookmark</span>
+          </div>
         </div>
       )}
 

@@ -40,6 +40,10 @@ export function AlbumsView({ initialReviews, initialWishlist, userPlan }: Albums
     setReviews((prev) => prev.filter((r) => r.id !== reviewId));
   };
 
+  const handleReviewUpdated = (updated: AlbumReview) => {
+    setReviews((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+  };
+
   const handleWishlistAdded = (album: AlbumWishlistItem) => {
     setWishlist((prev) => [album, ...prev]);
   };
@@ -140,6 +144,7 @@ export function AlbumsView({ initialReviews, initialWishlist, userPlan }: Albums
                   key={review.id}
                   review={review}
                   onDeleted={handleReviewDeleted}
+                  onUpdated={handleReviewUpdated}
                 />
               ))}
             </div>

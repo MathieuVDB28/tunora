@@ -319,7 +319,7 @@ export interface FriendRequest {
 }
 
 // Types pour les activités
-export type ActivityType = 'song_added' | 'song_mastered' | 'cover_posted' | 'friend_added' | 'song_wishlisted' | 'setlist_created' | 'band_created' | 'band_joined' | 'challenge_created' | 'challenge_accepted' | 'challenge_completed' | 'challenge_won' | 'album_reviewed' | 'exercise_shared' | 'gear_added';
+export type ActivityType = 'song_added' | 'song_mastered' | 'cover_posted' | 'friend_added' | 'song_wishlisted' | 'setlist_created' | 'band_created' | 'band_joined' | 'challenge_created' | 'challenge_accepted' | 'challenge_completed' | 'challenge_won' | 'album_reviewed' | 'exercise_shared' | 'gear_added' | 'album_wishlisted';
 
 export interface Activity {
   id: string;
@@ -340,6 +340,7 @@ export interface ActivityWithDetails extends ActivityWithProfile {
   friend?: Profile;
   wishlistSong?: WishlistSong;
   albumReview?: AlbumReview;
+  albumWishlistItem?: AlbumWishlistItem;
   reactions?: ReactionSummary[];
   commentCount?: number;
   currentUserReactions?: string[];

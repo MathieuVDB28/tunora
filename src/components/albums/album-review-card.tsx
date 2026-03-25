@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { deleteAlbumReview } from "@/lib/actions/albums";
+import { deleteAlbumReview, updateAlbumReview } from "@/lib/actions/albums";
 import type { AlbumReview } from "@/types";
 
 interface AlbumReviewCardProps {
   review: AlbumReview;
   onDeleted: (id: string) => void;
+  onUpdated: (updated: AlbumReview) => void;
 }
 
 function getRatingColor(rating: number) {
@@ -15,10 +16,15 @@ function getRatingColor(rating: number) {
   return { text: "text-red-400", bg: "bg-red-500", bgLight: "bg-red-500/20" };
 }
 
-export function AlbumReviewCard({ review, onDeleted }: AlbumReviewCardProps) {
+export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editRating, setEditRating] = useState(review.rating);
+  const [editReview, setEditReview] = useState(review.review || "");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editError, setEditError] = useState("");
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -28,6 +34,45 @@ export function AlbumReviewCard({ review, onDeleted }: AlbumReviewCardProps) {
     }
     setIsDeleting(false);
     setShowMenu(false);
+  };
+
+  const handleEdit = () => {
+    setEditRating(review.rating);
+    setEditReview(review.review || "");
+    setEditError("");
+    setIsEditing(true);
+    setShowMenu(false);
+    setShowDetail(true);
+  };
+
+  const handleUpdate = async () => {
+    setIsUpdating(true);
+    setEditError("");
+
+    const result = await updateAlbumReview(review.id, {
+      rating: editRating,
+      review: editReview.trim() || undefined,
+    });
+
+    if (result.success) {
+      onUpdated({
+        ...review,
+        rating: editRating,
+        review: editReview.trim() || undefined,
+        updated_at: new Date().toISOString(),
+      });
+      setIsEditing(false);
+    } else {
+      setEditError(result.error || "Une erreur est survenue");
+    }
+    setIsUpdating(false);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditRating(review.rating);
+    setEditReview(review.review || "");
+    setEditError("");
   };
 
   const formatDate = (dateString: string) => {
@@ -81,6 +126,13 @@ export function AlbumReviewCard({ review, onDeleted }: AlbumReviewCardProps) {
               <>
                 <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setShowMenu(false); }} />
                 <div className="absolute right-0 bottom-10 z-20 w-40 overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleEdit(); }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">edit</span>
+                    Modifier
+                  </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(); }}
                     disabled={isDeleting}
@@ -138,7 +190,7 @@ export function AlbumReviewCard({ review, onDeleted }: AlbumReviewCardProps) {
 
               {/* Close button */}
               <button
-                onClick={() => setShowDetail(false)}
+                onClick={() => { setShowDetail(false); setIsEditing(false); }}
                 className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
               >
                 <span className="material-symbols-outlined text-[20px]">close</span>
@@ -153,62 +205,151 @@ export function AlbumReviewCard({ review, onDeleted }: AlbumReviewCardProps) {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-5">
-              {/* Rating */}
-              <div className="mb-5 flex items-center gap-3">
-                <div className={`flex items-center gap-1.5 rounded-full ${colors.bg} px-4 py-2 text-lg font-bold text-white`}>
-                  <span className="material-symbols-outlined text-[18px]">star</span>
-                  {review.rating}/10
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  {formatDate(review.created_at)}
-                </span>
-              </div>
+              {isEditing ? (
+                <>
+                  {/* Edit Rating */}
+                  <div className="mb-6">
+                    <label className="mb-3 block text-sm font-medium">Ta note</label>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="range"
+                        min="1"
+                        max="10"
+                        value={editRating}
+                        onChange={(e) => setEditRating(Number(e.target.value))}
+                        className={`h-2 flex-1 cursor-pointer appearance-none rounded-full bg-accent [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full ${
+                          editRating >= 7
+                            ? "[&::-webkit-slider-thumb]:bg-green-500"
+                            : editRating >= 4
+                              ? "[&::-webkit-slider-thumb]:bg-amber-500"
+                              : "[&::-webkit-slider-thumb]:bg-red-500"
+                        }`}
+                      />
+                      <div className={`flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold ${
+                        editRating >= 7
+                          ? "bg-green-500/20 text-green-500"
+                          : editRating >= 4
+                            ? "bg-amber-500/20 text-amber-500"
+                            : "bg-red-500/20 text-red-500"
+                      }`}>
+                        {editRating}
+                      </div>
+                    </div>
+                    <div className="mt-1 flex justify-between text-xs text-muted-foreground">
+                      <span>1</span>
+                      <span>10</span>
+                    </div>
+                  </div>
 
-              {/* Album metadata */}
-              {(review.release_date || review.total_tracks) && (
-                <div className="mb-5 flex flex-wrap gap-3 text-sm text-muted-foreground">
-                  {review.release_date && (
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[16px]">calendar_today</span>
-                      {review.release_date.split("-")[0]}
-                    </span>
-                  )}
-                  {review.total_tracks && (
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[16px]">music_note</span>
-                      {review.total_tracks} titres
-                    </span>
-                  )}
-                </div>
-              )}
+                  {/* Edit Review */}
+                  <div className="mb-6">
+                    <label className="mb-2 block text-sm font-medium">
+                      Ton impression <span className="text-muted-foreground">(optionnel)</span>
+                    </label>
+                    <textarea
+                      value={editReview}
+                      onChange={(e) => setEditReview(e.target.value)}
+                      placeholder="Qu'est-ce que tu en as pensé ?"
+                      rows={4}
+                      maxLength={2000}
+                      className="w-full resize-none rounded-xl border border-border bg-background p-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                    <p className="mt-1 text-right text-xs text-muted-foreground">
+                      {editReview.length}/2000
+                    </p>
+                  </div>
 
-              {/* Review */}
-              {review.review ? (
-                <div>
-                  <h3 className="mb-2 text-sm font-medium text-muted-foreground">Impression</h3>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                    {review.review}
-                  </p>
-                </div>
+                  {editError && (
+                    <p className="mb-4 text-sm text-red-500">{editError}</p>
+                  )}
+
+                  {/* Edit Actions */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleCancelEdit}
+                      disabled={isUpdating}
+                      className="flex-1 rounded-xl border border-border py-3 font-medium transition-colors hover:bg-accent disabled:opacity-50"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={handleUpdate}
+                      disabled={isUpdating}
+                      className="flex-1 rounded-xl bg-primary py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {isUpdating ? "Enregistrement..." : "Enregistrer"}
+                    </button>
+                  </div>
+                </>
               ) : (
-                <p className="text-sm italic text-muted-foreground">
-                  Aucune impression ajoutee
-                </p>
-              )}
+                <>
+                  {/* Rating */}
+                  <div className="mb-5 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex items-center gap-1.5 rounded-full ${colors.bg} px-4 py-2 text-lg font-bold text-white`}>
+                        <span className="material-symbols-outlined text-[18px]">star</span>
+                        {review.rating}/10
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {formatDate(review.created_at)}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleEdit()}
+                      className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">edit</span>
+                      Modifier
+                    </button>
+                  </div>
 
-              {/* Spotify link */}
-              {review.spotify_url && (
-                <a
-                  href={review.spotify_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-5 flex items-center gap-2 rounded-xl bg-[#1DB954]/10 px-4 py-3 text-sm font-medium text-[#1DB954] transition-colors hover:bg-[#1DB954]/20"
-                >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
-                  </svg>
-                  Écouter sur Spotify
-                </a>
+                  {/* Album metadata */}
+                  {(review.release_date || review.total_tracks) && (
+                    <div className="mb-5 flex flex-wrap gap-3 text-sm text-muted-foreground">
+                      {review.release_date && (
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+                          {review.release_date.split("-")[0]}
+                        </span>
+                      )}
+                      {review.total_tracks && (
+                        <span className="flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[16px]">music_note</span>
+                          {review.total_tracks} titres
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Review */}
+                  {review.review ? (
+                    <div>
+                      <h3 className="mb-2 text-sm font-medium text-muted-foreground">Impression</h3>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                        {review.review}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm italic text-muted-foreground">
+                      Aucune impression ajoutee
+                    </p>
+                  )}
+
+                  {/* Spotify link */}
+                  {review.spotify_url && (
+                    <a
+                      href={review.spotify_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-5 flex items-center gap-2 rounded-xl bg-[#1DB954]/10 px-4 py-3 text-sm font-medium text-[#1DB954] transition-colors hover:bg-[#1DB954]/20"
+                    >
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                      </svg>
+                      Écouter sur Spotify
+                    </a>
+                  )}
+                </>
               )}
             </div>
           </div>

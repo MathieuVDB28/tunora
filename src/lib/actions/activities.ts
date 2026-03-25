@@ -14,6 +14,7 @@ import type {
   Profile,
   WishlistSong,
   AlbumReview,
+  AlbumWishlistItem,
 } from "@/types";
 
 // Mapper les types d'activités vers les types de notifications
@@ -121,6 +122,15 @@ function getNotificationForActivity(
           data: { url: "/challenges" },
         },
         notificationType: "challenge_won",
+      };
+    case "album_wishlisted":
+      return {
+        payload: {
+          title: "Album à écouter",
+          body: `${userName} veut écouter "${metadata?.album_name}" de ${metadata?.artist_name}`,
+          data: { url: "/feed" },
+        },
+        notificationType: "album_reviewed",
       };
     case "album_reviewed":
       return {
@@ -360,6 +370,10 @@ export async function getFeedActivities(
     .filter((a) => a.type === "song_wishlisted" && a.reference_id)
     .map((a) => a.reference_id);
 
+  const albumWishlistIds = activities
+    .filter((a) => a.type === "album_wishlisted" && a.reference_id)
+    .map((a) => a.reference_id);
+
   const albumReviewIds = activities
     .filter((a) => a.type === "album_reviewed" && a.reference_id)
     .map((a) => a.reference_id);
@@ -414,6 +428,19 @@ export async function getFeedActivities(
 
     if (wishlistSongs) {
       wishlistSongs.forEach((song) => wishlistSongsMap.set(song.id, song as WishlistSong));
+    }
+  }
+
+  // Récupérer tous les album wishlist items en une seule requête
+  const albumWishlistMap = new Map<string, AlbumWishlistItem>();
+  if (albumWishlistIds.length > 0) {
+    const { data: albumWishlistItems } = await supabase
+      .from("album_wishlist")
+      .select("*")
+      .in("id", albumWishlistIds);
+
+    if (albumWishlistItems) {
+      albumWishlistItems.forEach((item) => albumWishlistMap.set(item.id, item as AlbumWishlistItem));
     }
   }
 
@@ -540,6 +567,20 @@ export async function getFeedActivities(
             user_id: activity.user_id,
             created_at: activity.created_at,
           } as WishlistSong;
+        }
+      } else if (activity.type === "album_wishlisted") {
+        const albumWishlistItem = albumWishlistMap.get(activity.reference_id);
+        if (albumWishlistItem) {
+          enriched.albumWishlistItem = albumWishlistItem;
+        } else if (activity.metadata?.album_name) {
+          enriched.albumWishlistItem = {
+            id: activity.reference_id,
+            user_id: activity.user_id,
+            album_name: activity.metadata.album_name as string,
+            artist_name: activity.metadata.artist_name as string,
+            cover_url: (activity.metadata.cover_url as string) || undefined,
+            created_at: activity.created_at,
+          } as AlbumWishlistItem;
         }
       } else if (activity.type === "album_reviewed") {
         const albumReview = albumReviewsMap.get(activity.reference_id);
@@ -768,4 +809,71 @@ export async function getFriendRecentActivities(
     ...activity,
     user: activity.user as Profile,
   }));
+}
+
+// === Récupérer les données d'interaction d'une cover (via son activité) ===
+export async function getCoverActivityData(
+  coverId: string
+): Promise<{
+  activityId: string;
+  reactions: ReactionSummary[];
+  currentUserReactions: string[];
+  commentCount: number;
+  currentUserId: string;
+} | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  // Trouver l'activité associée à cette cover
+  const { data: activity } = await supabase
+    .from("activities")
+    .select("id")
+    .eq("type", "cover_posted")
+    .eq("reference_id", coverId)
+    .single();
+
+  if (!activity) return null;
+
+  // Récupérer les réactions
+  const { data: allReactions } = await supabase
+    .from("activity_reactions")
+    .select("user_id, emoji")
+    .eq("activity_id", activity.id);
+
+  const reactions: ReactionSummary[] = [];
+  const currentUserReactions: string[] = [];
+
+  if (allReactions && allReactions.length > 0) {
+    const emojiCounts = new Map<string, { count: number; reacted: boolean }>();
+    for (const r of allReactions) {
+      const existing = emojiCounts.get(r.emoji) || { count: 0, reacted: false };
+      existing.count++;
+      if (r.user_id === user.id) {
+        existing.reacted = true;
+        currentUserReactions.push(r.emoji);
+      }
+      emojiCounts.set(r.emoji, existing);
+    }
+    for (const [emoji, data] of emojiCounts) {
+      reactions.push({ emoji, count: data.count, reacted: data.reacted });
+    }
+  }
+
+  // Compter les commentaires
+  const { count } = await supabase
+    .from("activity_comments")
+    .select("*", { count: "exact", head: true })
+    .eq("activity_id", activity.id);
+
+  return {
+    activityId: activity.id,
+    reactions,
+    currentUserReactions,
+    commentCount: count || 0,
+    currentUserId: user.id,
+  };
 }

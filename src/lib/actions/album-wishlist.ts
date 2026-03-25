@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createActivity } from "@/lib/actions/activities";
 import type { AlbumWishlistItem, CreateAlbumWishlistInput } from "@/types";
 
 // === Récupérer la wishlist albums ===
@@ -104,6 +105,17 @@ export async function addToAlbumWishlist(
     console.error("Error adding to album wishlist:", error);
     return { success: false, error: "Erreur lors de l'ajout à la wishlist" };
   }
+
+  // Créer une activité pour le feed
+  createActivity({
+    type: "album_wishlisted",
+    reference_id: data.id,
+    metadata: {
+      album_name: input.album_name,
+      artist_name: input.artist_name,
+      cover_url: input.cover_url,
+    },
+  }).catch(console.error);
 
   revalidatePath("/albums");
   return { success: true, album: data as AlbumWishlistItem };
