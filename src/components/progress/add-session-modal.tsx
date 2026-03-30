@@ -34,7 +34,7 @@ export function AddSessionModal({
 
   // Champs du formulaire
   const [selectedSong, setSelectedSong] = useState<Song | null>(timerSong || null);
-  const [durationMinutes, setDurationMinutes] = useState(timerDuration || 30);
+  const [durationMinutes, setDurationMinutes] = useState<number | "">(timerDuration || 30);
   const [practicedAt, setPracticedAt] = useState(
     new Date().toISOString().slice(0, 16)
   );
@@ -95,7 +95,7 @@ export function AddSessionModal({
   }, [isOpen, handleClose]);
 
   const handleSubmit = async () => {
-    if (durationMinutes < 1) {
+    if (!durationMinutes || durationMinutes < 1) {
       setError("La durée doit être d'au moins 1 minute");
       return;
     }
@@ -214,10 +214,12 @@ export function AddSessionModal({
               <label className="mb-2 block text-sm font-medium">Durée (minutes)</label>
               <input
                 type="number"
+                inputMode="numeric"
                 min="1"
                 max="480"
                 value={durationMinutes}
-                onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)}
+                onChange={(e) => setDurationMinutes(e.target.value === "" ? "" : parseInt(e.target.value) || 0)}
+                onFocus={(e) => e.target.select()}
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
                 disabled={mode === "timer"}
               />
@@ -365,7 +367,7 @@ export function AddSessionModal({
           {/* Bouton de validation */}
           <button
             onClick={handleSubmit}
-            disabled={loading || durationMinutes < 1}
+            disabled={loading || !durationMinutes || durationMinutes < 1}
             className="w-full rounded-lg bg-primary py-3 font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
           >
             {loading ? (

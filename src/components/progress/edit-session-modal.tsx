@@ -31,7 +31,7 @@ export function EditSessionModal({
 
   // Champs du formulaire
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
-  const [durationMinutes, setDurationMinutes] = useState(30);
+  const [durationMinutes, setDurationMinutes] = useState<number | "">(30);
   const [practicedAt, setPracticedAt] = useState("");
   const [bpmAchieved, setBpmAchieved] = useState<string>("");
   const [mood, setMood] = useState<SessionMood | null>(null);
@@ -90,6 +90,11 @@ export function EditSessionModal({
 
   const handleSave = async () => {
     if (!session) return;
+
+    if (!durationMinutes || durationMinutes < 1) {
+      setError("La durée doit être d'au moins 1 minute");
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -244,7 +249,7 @@ export function EditSessionModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-2 block text-sm font-medium">Durée (minutes)</label>
-                <input type="number" min="1" max="480" value={durationMinutes} onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none" />
+                <input type="number" inputMode="numeric" min="1" max="480" value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value === "" ? "" : parseInt(e.target.value) || 0)} onFocus={(e) => e.target.select()} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none" />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium">Date et heure</label>
