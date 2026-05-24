@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createActivity } from "./activities";
-import { getRecommendations, getArtistId } from "@/lib/services/spotify";
+import { getRecommendations, getArtistId, getAlbumArtistIds } from "@/lib/services/spotify";
+import { getSimilarArtists } from "@/lib/services/lastfm";
 import type {
   AlbumReview,
   CreateAlbumReviewInput,
@@ -24,8 +25,8 @@ export async function createAlbumReview(
     return { success: false, error: "Non authentifié" };
   }
 
-  if (input.rating < 1 || input.rating > 10) {
-    return { success: false, error: "La note doit être entre 1 et 10" };
+  if (input.rating < 0 || input.rating > 10) {
+    return { success: false, error: "La note doit être entre 0 et 10" };
   }
 
   const { data, error } = await supabase
@@ -104,8 +105,8 @@ export async function updateAlbumReview(
     return { success: false, error: "Non authentifié" };
   }
 
-  if (input.rating !== undefined && (input.rating < 1 || input.rating > 10)) {
-    return { success: false, error: "La note doit être entre 1 et 10" };
+  if (input.rating !== undefined && (input.rating < 0 || input.rating > 10)) {
+    return { success: false, error: "La note doit être entre 0 et 10" };
   }
 
   const { error } = await supabase
@@ -177,33 +178,83 @@ export async function getAlbumRecommendations(): Promise<{
     return { success: false, error: "Cette fonctionnalité nécessite un plan Pro ou Band" };
   }
 
-  // Récupérer les artistes des albums écoutés récemment
+  // Récupérer les albums écoutés récemment
   const { data: reviews } = await supabase
     .from("album_reviews")
     .select("artist_name, spotify_id")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(15);
 
   if (!reviews || reviews.length === 0) {
     return { success: true, data: [] };
   }
 
-  // Récupérer les IDs d'artistes Spotify
-  const uniqueArtists = [...new Set(reviews.map((r) => r.artist_name))];
-  const artistIds: string[] = [];
+  // ── Étape 1 : résoudre les IDs Spotify des artistes écoutés ──────────────
+  const seenArtistIds = new Set<string>();
+  const seedArtistIds: string[] = [];
+  const seedArtistNames = [...new Set(reviews.map((r) => r.artist_name))];
 
-  for (const artistName of uniqueArtists.slice(0, 5)) {
-    const id = await getArtistId(artistName);
-    if (id) artistIds.push(id);
+  for (const review of reviews.slice(0, 8)) {
+    if (seedArtistIds.length >= 6) break;
+    if (review.spotify_id) {
+      const ids = await getAlbumArtistIds(review.spotify_id);
+      for (const id of ids) {
+        if (!seenArtistIds.has(id)) {
+          seenArtistIds.add(id);
+          seedArtistIds.push(id);
+        }
+      }
+    }
+  }
+  // Fallback : recherche par nom pour les reviews sans spotify_id
+  for (const name of seedArtistNames.slice(0, 6)) {
+    if (seedArtistIds.length >= 6) break;
+    const id = await getArtistId(name);
+    if (id && !seenArtistIds.has(id)) {
+      seenArtistIds.add(id);
+      seedArtistIds.push(id);
+    }
   }
 
-  if (artistIds.length === 0) {
+  if (seedArtistIds.length === 0) {
+    console.error("getAlbumRecommendations: impossible de résoudre les IDs Spotify");
     return { success: true, data: [] };
   }
 
-  // Obtenir les recommandations
-  const albums = await getRecommendations(artistIds, 20);
+  // ── Étape 2 : artistes similaires via Last.fm ─────────────────────────────
+  // On prend max 3 similaires PAR artiste source pour couvrir toute la collection
+  // et garder un temps de réponse acceptable (~3 similaires × N artistes sources).
+  const reviewedNamesLower = new Set(seedArtistNames.map((n) => n.toLowerCase()));
+  const similarArtistIds: string[] = [];
+  const seenSimilarIds = new Set(seenArtistIds);
+  const MAX_SIMILAR_PER_ARTIST = 3;
+
+  for (const artistName of seedArtistNames.slice(0, 6)) {
+    const similarNames = await getSimilarArtists(artistName);
+    console.log(`[recos] Last.fm similar to "${artistName}":`, similarNames.slice(0, 5));
+
+    let addedForThisArtist = 0;
+    for (const name of similarNames) {
+      if (addedForThisArtist >= MAX_SIMILAR_PER_ARTIST) break;
+      if (reviewedNamesLower.has(name.toLowerCase())) continue;
+      const id = await getArtistId(name);
+      if (id && !seenSimilarIds.has(id)) {
+        seenSimilarIds.add(id);
+        similarArtistIds.push(id);
+        addedForThisArtist++;
+      }
+    }
+  }
+
+  console.log(`[recos] ${similarArtistIds.length} similar artist IDs from Last.fm`);
+
+  // Utilise les artistes similaires si Last.fm a renvoyé des résultats,
+  // sinon fallback sur les artistes déjà écoutés
+  const targetArtistIds = similarArtistIds.length > 0 ? similarArtistIds : seedArtistIds;
+
+  // Obtenir les albums de ces artistes via Spotify
+  const albums = await getRecommendations(targetArtistIds, 20);
 
   // Filtrer les albums déjà reviewés
   const reviewedSpotifyIds = new Set(reviews.map((r) => r.spotify_id).filter(Boolean));

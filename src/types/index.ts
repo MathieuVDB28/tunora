@@ -1202,7 +1202,7 @@ export interface AlbumReview {
   spotify_url?: string;
   release_date?: string;
   total_tracks?: number;
-  rating: number; // 1-10
+  rating: number; // 0–10 integer stored in DB (stars × 2); display as rating / 2 stars
   review?: string;
   created_at: string;
   updated_at: string;

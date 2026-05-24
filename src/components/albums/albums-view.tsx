@@ -205,7 +205,16 @@ export function AlbumsView({ initialReviews, initialWishlist, userPlan }: Albums
 
       {/* Content - Recommendations */}
       {activeTab === "recommendations" && (
-        <AlbumRecommendations isPaid={isPaid} hasReviews={reviews.length > 0} />
+        <AlbumRecommendations
+          isPaid={isPaid}
+          hasReviews={reviews.length > 0}
+          onReviewAdded={(review) => {
+            setReviews((prev) => [review, ...prev]);
+          }}
+          onWishlistAdded={(album) => {
+            setWishlist((prev) => [album, ...prev]);
+          }}
+        />
       )}
 
       {/* Add Album Review Modal */}

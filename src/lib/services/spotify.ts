@@ -198,49 +198,52 @@ export async function getAudioFeatures(trackId: string): Promise<SpotifyAudioFea
   return response.json();
 }
 
+// Get Spotify artist IDs from an album's spotify_id (more reliable than text search)
+export async function getAlbumArtistIds(albumSpotifyId: string): Promise<string[]> {
+  const token = await getAccessToken();
+  const response = await fetch(`https://api.spotify.com/v1/albums/${albumSpotifyId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) return [];
+  const data = await response.json();
+  return (data.artists || []).map((a: { id: string }) => a.id);
+}
+
+// Fetch albums from a list of Spotify artist IDs.
+// Artist discovery (via Last.fm) is handled upstream in getAlbumRecommendations.
 export async function getRecommendations(
-  seedArtistIds: string[],
+  artistIds: string[],
   limit: number = 20
 ): Promise<SpotifyAlbum[]> {
-  if (seedArtistIds.length === 0) return [];
+  if (artistIds.length === 0) return [];
 
   const token = await getAccessToken();
-  // Spotify allows max 5 seeds total
-  const seeds = seedArtistIds.slice(0, 5).join(',');
-
-  const response = await fetch(
-    `https://api.spotify.com/v1/recommendations?seed_artists=${encodeURIComponent(seeds)}&limit=${limit}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
-
-  if (!response.ok) {
-    console.error('Spotify recommendations error:', response.status);
-    return [];
-  }
-
-  const data = await response.json();
-  const tracks = data.tracks || [];
-
-  // Extract unique albums from recommended tracks
   const albumMap = new Map<string, SpotifyAlbum>();
-  for (const track of tracks) {
-    const album = track.album;
-    if (album && !albumMap.has(album.id)) {
-      albumMap.set(album.id, {
-        id: album.id,
-        name: album.name,
-        artists: album.artists || track.artists,
-        images: album.images || [],
-        external_urls: album.external_urls || {},
-        release_date: album.release_date || '',
-        total_tracks: album.total_tracks || 0,
-      });
+
+  for (const artistId of artistIds) {
+    if (albumMap.size >= limit) break;
+    const res = await fetch(
+      `https://api.spotify.com/v1/artists/${artistId}/albums?album_group=album&limit=3&market=FR`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) continue;
+    const data = await res.json();
+    for (const album of (data.items || []) as SpotifyAlbum[]) {
+      if (!albumMap.has(album.id)) {
+        albumMap.set(album.id, {
+          id: album.id,
+          name: album.name,
+          artists: album.artists,
+          images: album.images || [],
+          external_urls: album.external_urls || {},
+          release_date: album.release_date || '',
+          total_tracks: album.total_tracks || 0,
+        });
+      }
     }
   }
 
-  return Array.from(albumMap.values());
+  return [...albumMap.values()].slice(0, limit);
 }
 
 export async function getArtistId(artistName: string): Promise<string | null> {

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { deleteAlbumReview, updateAlbumReview } from "@/lib/actions/albums";
+import { StarRating } from "@/components/ui/star-rating";
 import type { AlbumReview } from "@/types";
 
 interface AlbumReviewCardProps {
@@ -10,10 +11,9 @@ interface AlbumReviewCardProps {
   onUpdated: (updated: AlbumReview) => void;
 }
 
-function getRatingColor(rating: number) {
-  if (rating >= 7) return { text: "text-green-400", bg: "bg-green-500", bgLight: "bg-green-500/20" };
-  if (rating >= 4) return { text: "text-amber-400", bg: "bg-amber-500", bgLight: "bg-amber-500/20" };
-  return { text: "text-red-400", bg: "bg-red-500", bgLight: "bg-red-500/20" };
+// rating is stored as 0–10 integer (db value = stars × 2)
+function starsFromDb(dbRating: number) {
+  return dbRating / 2;
 }
 
 export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCardProps) {
@@ -21,7 +21,7 @@ export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCar
   const [showDetail, setShowDetail] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editRating, setEditRating] = useState(review.rating);
+  const [editRating, setEditRating] = useState(starsFromDb(review.rating));
   const [editReview, setEditReview] = useState(review.review || "");
   const [isUpdating, setIsUpdating] = useState(false);
   const [editError, setEditError] = useState("");
@@ -37,7 +37,7 @@ export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCar
   };
 
   const handleEdit = () => {
-    setEditRating(review.rating);
+    setEditRating(starsFromDb(review.rating));
     setEditReview(review.review || "");
     setEditError("");
     setIsEditing(true);
@@ -50,14 +50,14 @@ export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCar
     setEditError("");
 
     const result = await updateAlbumReview(review.id, {
-      rating: editRating,
+      rating: Math.round(editRating * 2),
       review: editReview.trim() || undefined,
     });
 
     if (result.success) {
       onUpdated({
         ...review,
-        rating: editRating,
+        rating: Math.round(editRating * 2),
         review: editReview.trim() || undefined,
         updated_at: new Date().toISOString(),
       });
@@ -70,7 +70,7 @@ export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCar
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setEditRating(review.rating);
+    setEditRating(starsFromDb(review.rating));
     setEditReview(review.review || "");
     setEditError("");
   };
@@ -82,8 +82,6 @@ export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCar
       year: "numeric",
     });
   };
-
-  const colors = getRatingColor(review.rating);
 
   return (
     <>
@@ -105,10 +103,10 @@ export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCar
             </div>
           )}
 
-          {/* Rating badge - opaque background for visibility */}
-          <div className={`absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full ${colors.bg} px-3 py-1.5 text-sm font-bold text-white shadow-lg`}>
-            <span className="material-symbols-outlined text-[14px]">star</span>
-            {review.rating}/10
+          {/* Rating badge */}
+          <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-sm font-bold text-white shadow-lg backdrop-blur-sm">
+            <span className="material-symbols-outlined text-[13px] text-amber-400">star</span>
+            {starsFromDb(review.rating)}
           </div>
 
           {/* Menu button */}
@@ -209,36 +207,13 @@ export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCar
                 <>
                   {/* Edit Rating */}
                   <div className="mb-6">
-                    <label className="mb-3 block text-sm font-medium">Ta note</label>
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="range"
-                        min="1"
-                        max="10"
-                        value={editRating}
-                        onChange={(e) => setEditRating(Number(e.target.value))}
-                        className={`h-2 flex-1 cursor-pointer appearance-none rounded-full bg-accent [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full ${
-                          editRating >= 7
-                            ? "[&::-webkit-slider-thumb]:bg-green-500"
-                            : editRating >= 4
-                              ? "[&::-webkit-slider-thumb]:bg-amber-500"
-                              : "[&::-webkit-slider-thumb]:bg-red-500"
-                        }`}
-                      />
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold ${
-                        editRating >= 7
-                          ? "bg-green-500/20 text-green-500"
-                          : editRating >= 4
-                            ? "bg-amber-500/20 text-amber-500"
-                            : "bg-red-500/20 text-red-500"
-                      }`}>
-                        {editRating}
-                      </div>
+                    <div className="mb-3 flex items-center justify-between">
+                      <label className="text-sm font-medium">Ta note</label>
+                      <span className="text-sm font-semibold text-amber-400">
+                        {editRating > 0 ? `${editRating} / 5` : "—"}
+                      </span>
                     </div>
-                    <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-                      <span>1</span>
-                      <span>10</span>
-                    </div>
+                    <StarRating value={editRating} onChange={setEditRating} size="lg" />
                   </div>
 
                   {/* Edit Review */}
@@ -286,21 +261,23 @@ export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCar
                   {/* Rating */}
                   <div className="mb-5 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`flex items-center gap-1.5 rounded-full ${colors.bg} px-4 py-2 text-lg font-bold text-white`}>
-                        <span className="material-symbols-outlined text-[18px]">star</span>
-                        {review.rating}/10
-                      </div>
+                      <StarRating value={starsFromDb(review.rating)} size="md" />
+                      <span className="text-sm font-semibold text-amber-400">
+                        {starsFromDb(review.rating)} / 5
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
                       <span className="text-sm text-muted-foreground">
                         {formatDate(review.created_at)}
                       </span>
+                      <button
+                        onClick={() => handleEdit()}
+                        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">edit</span>
+                        Modifier
+                      </button>
                     </div>
-                    <button
-                      onClick={() => handleEdit()}
-                      className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent"
-                    >
-                      <span className="material-symbols-outlined text-[16px]">edit</span>
-                      Modifier
-                    </button>
                   </div>
 
                   {/* Album metadata */}

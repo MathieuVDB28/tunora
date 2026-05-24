@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createAlbumReview } from "@/lib/actions/albums";
+import { StarRating } from "@/components/ui/star-rating";
 import type { AlbumReview, SpotifyAlbum } from "@/types";
 
 interface AddAlbumModalProps {
@@ -17,7 +18,7 @@ export function AddAlbumModal({ isOpen, onClose, onAdded, prefillAlbum }: AddAlb
   const [results, setResults] = useState<SpotifyAlbum[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedAlbum, setSelectedAlbum] = useState<SpotifyAlbum | null>(null);
-  const [rating, setRating] = useState(7);
+  const [rating, setRating] = useState(3.5); // star value 0–5 (db = stars × 2)
   const [review, setReview] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -29,7 +30,7 @@ export function AddAlbumModal({ isOpen, onClose, onAdded, prefillAlbum }: AddAlb
       setSearchQuery("");
       setResults([]);
       setSelectedAlbum(null);
-      setRating(7);
+      setRating(3.5);
       setReview("");
       setError("");
     } else if (prefillAlbum) {
@@ -87,7 +88,7 @@ export function AddAlbumModal({ isOpen, onClose, onAdded, prefillAlbum }: AddAlb
       spotify_url: selectedAlbum.external_urls?.spotify,
       release_date: selectedAlbum.release_date,
       total_tracks: selectedAlbum.total_tracks,
-      rating,
+      rating: Math.round(rating * 2),
       review: review.trim() || undefined,
     });
 
@@ -223,38 +224,13 @@ export function AddAlbumModal({ isOpen, onClose, onAdded, prefillAlbum }: AddAlb
 
               {/* Rating */}
               <div className="mb-6">
-                <label className="mb-3 block text-sm font-medium">
-                  Ta note
-                </label>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={rating}
-                    onChange={(e) => setRating(Number(e.target.value))}
-                    className={`h-2 flex-1 cursor-pointer appearance-none rounded-full bg-accent [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full ${
-                      rating >= 7
-                        ? "[&::-webkit-slider-thumb]:bg-green-500"
-                        : rating >= 4
-                          ? "[&::-webkit-slider-thumb]:bg-amber-500"
-                          : "[&::-webkit-slider-thumb]:bg-red-500"
-                    }`}
-                  />
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold ${
-                    rating >= 7
-                      ? "bg-green-500/20 text-green-500"
-                      : rating >= 4
-                        ? "bg-amber-500/20 text-amber-500"
-                        : "bg-red-500/20 text-red-500"
-                  }`}>
-                    {rating}
-                  </div>
+                <div className="mb-3 flex items-center justify-between">
+                  <label className="text-sm font-medium">Ta note</label>
+                  <span className="text-sm font-semibold text-amber-400">
+                    {rating > 0 ? `${rating} / 5` : "—"}
+                  </span>
                 </div>
-                <div className="mt-1 flex justify-between text-xs text-muted-foreground">
-                  <span>1</span>
-                  <span>10</span>
-                </div>
+                <StarRating value={rating} onChange={setRating} size="lg" />
               </div>
 
               {/* Review text */}

@@ -301,8 +301,8 @@ export function ActivityCard({ activity, currentUserId }: ActivityCardProps) {
               <div className="truncate text-sm text-muted-foreground">{activity.albumReview.artist_name}</div>
               <div className="mt-1.5 flex items-center gap-1.5">
                 <div className="flex items-center gap-1 rounded-full bg-amber-500/20 px-2.5 py-0.5 text-sm font-semibold text-amber-500">
-                  <span className="material-symbols-outlined text-[16px]">star</span>
-                  {activity.albumReview.rating}/10
+                  <span className="material-symbols-outlined text-[14px]">star</span>
+                  {activity.albumReview.rating / 2} / 5
                 </div>
               </div>
             </div>
