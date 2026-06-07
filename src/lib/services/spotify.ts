@@ -1,4 +1,4 @@
-import type { SpotifySearchResult, SpotifyTrack, SpotifyAlbumSearchResult, SpotifyAlbum, SpotifyAudioFeatures } from '@/types';
+import type { SpotifySearchResult, SpotifyTrack, SpotifyAlbumSearchResult, SpotifyAlbum, SpotifyAlbumDetails, SpotifyArtist, SpotifyAudioFeatures } from '@/types';
 import { createClient as createServiceRoleClient } from '@supabase/supabase-js';
 
 let accessToken: string | null = null;
@@ -260,6 +260,63 @@ export async function getArtistId(artistName: string): Promise<string | null> {
 
   const data = await response.json();
   return data.artists?.items?.[0]?.id || null;
+}
+
+export async function getAlbumDetails(albumId: string): Promise<SpotifyAlbumDetails | null> {
+  const token = await getAccessToken();
+  const response = await fetch(`https://api.spotify.com/v1/albums/${albumId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) return null;
+  return response.json();
+}
+
+export async function getArtistDetails(artistId: string): Promise<SpotifyArtist | null> {
+  const token = await getAccessToken();
+  const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) return null;
+  return response.json();
+}
+
+export async function getArtistAlbums(artistId: string, maxAlbums = 30): Promise<SpotifyAlbum[]> {
+  const token = await getAccessToken();
+  const LIMIT = 3;
+  const allAlbums = new Map<string, SpotifyAlbum>();
+
+  for (const group of ['album', 'single']) {
+    if (allAlbums.size >= maxAlbums) break;
+
+    let offset = 0;
+    let total = Infinity;
+
+    while (offset < total && allAlbums.size < maxAlbums) {
+      const url = `https://api.spotify.com/v1/artists/${artistId}/albums?album_group=${group}&limit=${LIMIT}&offset=${offset}&market=FR`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) break;
+      const data = await res.json();
+      total = data.total ?? 0;
+      for (const item of (data.items || []) as SpotifyAlbum[]) {
+        allAlbums.set(item.id, item);
+      }
+      offset += LIMIT;
+    }
+  }
+
+  return [...allAlbums.values()].slice(0, maxAlbums);
+}
+
+export async function searchArtists(query: string, limit: number = 5): Promise<SpotifyArtist[]> {
+  if (!query.trim()) return [];
+  const token = await getAccessToken();
+  const response = await fetch(
+    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist&limit=${limit}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!response.ok) return [];
+  const data = await response.json();
+  return (data.artists?.items || []) as SpotifyArtist[];
 }
 
 export async function getAudioFeaturesBatch(trackIds: string[]): Promise<SpotifyAudioFeatures[]> {

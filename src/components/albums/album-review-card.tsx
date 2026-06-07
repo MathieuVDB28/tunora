@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { deleteAlbumReview, updateAlbumReview } from "@/lib/actions/albums";
 import { StarRating } from "@/components/ui/star-rating";
 import type { AlbumReview } from "@/types";
@@ -17,6 +19,7 @@ function starsFromDb(dbRating: number) {
 }
 
 export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCardProps) {
+  const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -83,10 +86,18 @@ export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCar
     });
   };
 
+  const handleCardClick = () => {
+    if (review.spotify_id) {
+      router.push(`/albums/${review.spotify_id}`);
+    } else {
+      setShowDetail(true);
+    }
+  };
+
   return (
     <>
       <div
-        onClick={() => setShowDetail(true)}
+        onClick={handleCardClick}
         className="group relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-border/80"
       >
         {/* Cover image */}
@@ -148,7 +159,13 @@ export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCar
         {/* Info */}
         <div className="p-3">
           <h3 className="truncate font-semibold">{review.album_name}</h3>
-          <p className="truncate text-sm text-muted-foreground">{review.artist_name}</p>
+          <Link
+            href={`/artists/by-name?q=${encodeURIComponent(review.artist_name)}`}
+            onClick={(e) => e.stopPropagation()}
+            className="truncate text-sm text-muted-foreground transition-colors hover:text-primary"
+          >
+            {review.artist_name}
+          </Link>
 
           {review.review && (
             <p className="mt-2 line-clamp-2 text-sm text-muted-foreground italic">
@@ -197,7 +214,13 @@ export function AlbumReviewCard({ review, onDeleted, onUpdated }: AlbumReviewCar
               {/* Album info overlay */}
               <div className="absolute bottom-4 left-4 right-4">
                 <h2 className="text-2xl font-bold text-white">{review.album_name}</h2>
-                <p className="text-white/80">{review.artist_name}</p>
+                <Link
+                  href={`/artists/by-name?q=${encodeURIComponent(review.artist_name)}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-white/80 transition-colors hover:text-white"
+                >
+                  {review.artist_name}
+                </Link>
               </div>
             </div>
 

@@ -2,15 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createServiceRoleClient } from "@supabase/supabase-js";
 import { createActivity } from "./activities";
 import { getRecommendations, getArtistId, getAlbumArtistIds } from "@/lib/services/spotify";
 import { getSimilarArtists } from "@/lib/services/lastfm";
 import type {
   AlbumReview,
+  AlbumCommunityStats,
   CreateAlbumReviewInput,
   UpdateAlbumReviewInput,
   SpotifyRecommendation,
 } from "@/types";
+
+function getServiceRoleSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("Supabase service role credentials not configured");
+  return createServiceRoleClient(url, key);
+}
 
 // === Créer une review d'album ===
 export async function createAlbumReview(
@@ -150,6 +159,71 @@ export async function deleteAlbumReview(
 
   revalidatePath("/albums");
   return { success: true };
+}
+
+// === Note moyenne communauté pour un album (tous utilisateurs, service role) ===
+export async function getAlbumCommunityStats(spotifyId: string): Promise<AlbumCommunityStats | null> {
+  const supabase = getServiceRoleSupabase();
+
+  const { data, error } = await supabase
+    .from("album_reviews")
+    .select("rating")
+    .eq("spotify_id", spotifyId);
+
+  if (error || !data || data.length === 0) return null;
+
+  const avg = data.reduce((sum, r) => sum + r.rating, 0) / data.length;
+  return { avg_rating: avg, review_count: data.length };
+}
+
+// === Notes communauté pour plusieurs albums (batch, pour la fiche artiste) ===
+export async function getAlbumsCommunityStats(
+  spotifyIds: string[]
+): Promise<Record<string, AlbumCommunityStats>> {
+  if (spotifyIds.length === 0) return {};
+
+  const supabase = getServiceRoleSupabase();
+
+  const { data, error } = await supabase
+    .from("album_reviews")
+    .select("spotify_id, rating")
+    .in("spotify_id", spotifyIds);
+
+  if (error || !data) return {};
+
+  const result: Record<string, { sum: number; count: number }> = {};
+  for (const row of data) {
+    if (!row.spotify_id) continue;
+    if (!result[row.spotify_id]) result[row.spotify_id] = { sum: 0, count: 0 };
+    result[row.spotify_id].sum += row.rating;
+    result[row.spotify_id].count += 1;
+  }
+
+  const stats: Record<string, AlbumCommunityStats> = {};
+  for (const [id, { sum, count }] of Object.entries(result)) {
+    stats[id] = { avg_rating: sum / count, review_count: count };
+  }
+  return stats;
+}
+
+// === Review de l'utilisateur courant pour un album donné (par spotify_id) ===
+export async function getUserAlbumReviewBySpotifyId(spotifyId: string): Promise<AlbumReview | null> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from("album_reviews")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("spotify_id", spotifyId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data as AlbumReview;
 }
 
 // === Récupérer des recommandations basées sur les albums écoutés (Pro/Band only) ===

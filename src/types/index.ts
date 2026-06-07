@@ -121,6 +121,34 @@ export interface SpotifyAlbumSearchResult {
   };
 }
 
+export interface SpotifyAlbumDetails {
+  id: string;
+  name: string;
+  album_type: string;
+  artists: { id: string; name: string; external_urls: { spotify: string } }[];
+  images: { url: string; width: number; height: number }[];
+  release_date: string;
+  total_tracks: number;
+  external_urls: { spotify: string };
+  label: string;
+  popularity: number;
+}
+
+export interface SpotifyArtist {
+  id: string;
+  name: string;
+  images: { url: string; width: number; height: number }[];
+  genres?: string[];
+  followers?: { total: number };
+  popularity: number;
+  external_urls: { spotify: string };
+}
+
+export interface AlbumCommunityStats {
+  avg_rating: number;
+  review_count: number;
+}
+
 // Types pour le profil
 export type UserPlan = 'free' | 'pro' | 'band';
 
