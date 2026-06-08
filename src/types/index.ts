@@ -105,7 +105,7 @@ export interface SpotifySearchResult {
 export interface SpotifyAlbum {
   id: string;
   name: string;
-  artists: { name: string }[];
+  artists: { id?: string; name: string }[];
   images: { url: string; width: number; height: number }[];
   external_urls: {
     spotify: string;

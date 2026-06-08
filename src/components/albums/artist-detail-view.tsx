@@ -67,7 +67,7 @@ export function ArtistDetailView({ artist, albums, communityStats }: Props) {
 
       <div className="px-4 py-5">
         {/* Genres */}
-        {(artist.genres?.length ?? 0) > 0 && (
+        {artist.genres && artist.genres.length > 0 && (
           <div className="mb-6 flex flex-wrap gap-2">
             {artist.genres.slice(0, 6).map((genre) => (
               <span

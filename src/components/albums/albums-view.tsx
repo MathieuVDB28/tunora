@@ -23,7 +23,13 @@ export function AlbumsView({ initialReviews, initialWishlist, userPlan }: Albums
   const [activeTab, setActiveTab] = useState<"reviews" | "wishlist" | "recommendations">("reviews");
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [reviewFromWishlist, setReviewFromWishlist] = useState<AlbumWishlistItem | null>(null);
+  const [minStars, setMinStars] = useState(0);
   const isPaid = userPlan !== "free";
+
+  // minStars is in half-stars (0 = all, 2 = ≥1★, 4 = ≥2★, …, 10 = 5★ exact)
+  const filteredReviews = minStars === 0
+    ? reviews
+    : reviews.filter((r) => r.rating >= minStars);
 
   const handleReviewAdded = (review: AlbumReview) => {
     setReviews((prev) => [review, ...prev]);
@@ -137,9 +143,43 @@ export function AlbumsView({ initialReviews, initialWishlist, userPlan }: Albums
       {/* Content - Reviews */}
       {activeTab === "reviews" && (
         <>
-          {reviews.length > 0 ? (
+          {reviews.length > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {[0, 10, 8, 6, 4, 2].map((val) => {
+                const stars = val === 0 ? 0 : val / 2;
+                const isActive = minStars === val;
+                return (
+                  <button
+                    key={val}
+                    onClick={() => setMinStars(val)}
+                    className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                      isActive
+                        ? "border-amber-400 bg-amber-400/10 text-amber-500"
+                        : "border-border bg-card text-muted-foreground hover:border-amber-400/50 hover:text-foreground"
+                    }`}
+                  >
+                    {val === 0 ? (
+                      "Toutes"
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-[14px] text-amber-400">star</span>
+                        {`≥ ${stars}`}
+                      </>
+                    )}
+                  </button>
+                );
+              })}
+              {minStars > 0 && (
+                <span className="text-sm text-muted-foreground">
+                  {filteredReviews.length} résultat{filteredReviews.length !== 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+          )}
+
+          {filteredReviews.length > 0 ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {reviews.map((review) => (
+              {filteredReviews.map((review) => (
                 <AlbumReviewCard
                   key={review.id}
                   review={review}
@@ -147,6 +187,17 @@ export function AlbumsView({ initialReviews, initialWishlist, userPlan }: Albums
                   onUpdated={handleReviewUpdated}
                 />
               ))}
+            </div>
+          ) : reviews.length > 0 ? (
+            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-12">
+              <span className="material-symbols-outlined mb-3 text-4xl text-muted-foreground">filter_list</span>
+              <p className="text-muted-foreground">Aucun album avec cette note</p>
+              <button
+                onClick={() => setMinStars(0)}
+                className="mt-3 text-sm text-primary hover:underline"
+              >
+                Effacer le filtre
+              </button>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16">

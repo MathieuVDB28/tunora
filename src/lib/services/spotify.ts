@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import type { SpotifySearchResult, SpotifyTrack, SpotifyAlbumSearchResult, SpotifyAlbum, SpotifyAlbumDetails, SpotifyArtist, SpotifyAudioFeatures } from '@/types';
 import { createClient as createServiceRoleClient } from '@supabase/supabase-js';
 
@@ -262,50 +263,81 @@ export async function getArtistId(artistName: string): Promise<string | null> {
   return data.artists?.items?.[0]?.id || null;
 }
 
-export async function getAlbumDetails(albumId: string): Promise<SpotifyAlbumDetails | null> {
-  const token = await getAccessToken();
-  const response = await fetch(`https://api.spotify.com/v1/albums/${albumId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) return null;
-  return response.json();
-}
 
-export async function getArtistDetails(artistId: string): Promise<SpotifyArtist | null> {
-  const token = await getAccessToken();
-  const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) return null;
-  return response.json();
-}
+export const getArtistDetails = unstable_cache(
+  async (artistId: string): Promise<SpotifyArtist | null> => {
+    const token = await getAccessToken();
+    const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return null;
+    return response.json();
+  },
+  ['spotify-artist-details'],
+  { revalidate: 86400 }
+);
 
-export async function getArtistAlbums(artistId: string, maxAlbums = 30): Promise<SpotifyAlbum[]> {
+// Uses search endpoint (limit=3, paginated) — avoids the rate-limited /artists/{id}/albums endpoint.
+export async function getArtistAlbums(artistId: string, artistName: string): Promise<SpotifyAlbum[]> {
   const token = await getAccessToken();
-  const LIMIT = 3;
   const allAlbums = new Map<string, SpotifyAlbum>();
 
-  for (const group of ['album', 'single']) {
-    if (allAlbums.size >= maxAlbums) break;
+  let offset = 0;
+  let total = -1;
 
-    let offset = 0;
-    let total = Infinity;
+  while (allAlbums.size < 30) {
+    const q = encodeURIComponent(artistName);
+    const url = `https://api.spotify.com/v1/search?q=${q}&type=album&limit=3&offset=${offset}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) {
+      const retryAfter = res.headers.get('Retry-After');
+      console.error(`[getArtistAlbums] search status=${res.status} Retry-After=${retryAfter} body=${await res.text()}`);
+      break;
+    }
+    const data = await res.json();
+    if (total === -1) total = data.albums?.total ?? 0;
+    const items = (data.albums?.items || []) as SpotifyAlbum[];
 
-    while (offset < total && allAlbums.size < maxAlbums) {
-      const url = `https://api.spotify.com/v1/artists/${artistId}/albums?album_group=${group}&limit=${LIMIT}&offset=${offset}&market=FR`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) break;
-      const data = await res.json();
-      total = data.total ?? 0;
-      for (const item of (data.items || []) as SpotifyAlbum[]) {
+    // Keep only albums where this artist is a primary artist
+    for (const item of items) {
+      if (item.artists.some((a) => a.id === artistId || a.name.toLowerCase() === artistName.toLowerCase())) {
         allAlbums.set(item.id, item);
       }
-      offset += LIMIT;
+    }
+
+    offset += 3;
+    if (offset >= total || items.length === 0) break;
+  }
+
+  // Deduplicate by normalized name — Spotify returns multiple editions of the same album
+  const seenNames = new Set<string>();
+  const deduped: SpotifyAlbum[] = [];
+  for (const album of allAlbums.values()) {
+    const key = album.name.toLowerCase().replace(/\s*\(.*?\)\s*/g, '').trim();
+    if (!seenNames.has(key)) {
+      seenNames.add(key);
+      deduped.push(album);
     }
   }
 
-  return [...allAlbums.values()].slice(0, maxAlbums);
+  deduped.sort((a, b) => (b.release_date ?? '').localeCompare(a.release_date ?? ''));
+
+  console.log(`[getArtistAlbums] collected=${allAlbums.size} deduped=${deduped.length} for "${artistName}"`);
+  return deduped;
 }
+
+export const getAlbumDetails = unstable_cache(
+  async (albumId: string): Promise<SpotifyAlbumDetails | null> => {
+    const token = await getAccessToken();
+    const response = await fetch(`https://api.spotify.com/v1/albums/${albumId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) return null;
+    return response.json();
+  },
+  ['spotify-album-details'],
+  { revalidate: 86400 }
+);
 
 export async function searchArtists(query: string, limit: number = 5): Promise<SpotifyArtist[]> {
   if (!query.trim()) return [];

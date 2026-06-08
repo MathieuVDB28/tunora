@@ -10,12 +10,10 @@ interface Props {
 export default async function ArtistDetailPage({ params }: Props) {
   const { id } = await params;
 
-  const [artist, albums] = await Promise.all([
-    getArtistDetails(id),
-    getArtistAlbums(id),
-  ]);
-
+  const artist = await getArtistDetails(id);
   if (!artist) notFound();
+
+  const albums = await getArtistAlbums(id, artist.name);
 
   const spotifyIds = albums.map((a) => a.id).filter(Boolean);
   const communityStats = await getAlbumsCommunityStats(spotifyIds);
