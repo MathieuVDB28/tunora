@@ -4,6 +4,7 @@ import { getFriendsCount } from "@/lib/actions/friends";
 import { PushNotificationManager } from "@/components/pwa";
 import { SidebarWrapper } from "@/components/layout/sidebar-wrapper";
 import { DesktopSidebar } from "@/components/layout/desktop-sidebar";
+import { NavigationProgress } from "@/components/layout/navigation-progress";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
@@ -56,6 +57,8 @@ export default async function MainLayout({
 
   return (
     <div className="flex min-h-screen">
+      <NavigationProgress />
+
       {/* Mobile Bottom Tab Bar */}
       <SidebarWrapper navItems={navItemsWithBadge} userInfo={userInfo} />
 
