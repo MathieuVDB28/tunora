@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { updateChallengeProgress } from "./challenges";
 import type {
   PracticeSession,
@@ -26,7 +26,7 @@ export async function getPracticeSessions(
   limit?: number
 ): Promise<PracticeSessionWithSong[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -71,7 +71,7 @@ export async function getPracticeSessionsBySong(
   songId: string
 ): Promise<PracticeSession[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -96,7 +96,7 @@ export async function getPracticeSession(
   id: string
 ): Promise<PracticeSessionWithSong | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return null;
@@ -124,7 +124,7 @@ export async function createPracticeSession(
   input: CreatePracticeSessionInput
 ): Promise<{ success: boolean; error?: string; session?: PracticeSession }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -166,7 +166,7 @@ export async function updatePracticeSession(
   input: UpdatePracticeSessionInput
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -195,7 +195,7 @@ export async function deletePracticeSession(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -219,7 +219,7 @@ export async function deletePracticeSession(
 
 export async function getPracticeStats(): Promise<PracticeStats> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   const defaultStats: PracticeStats = {
     totalSessions: 0,
@@ -341,7 +341,7 @@ export async function getPracticeStats(): Promise<PracticeStats> {
 
 export async function getSongPracticeStats(songId: string): Promise<SongPracticeStats> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   const defaultStats: SongPracticeStats = {
     totalSessions: 0,
@@ -409,7 +409,7 @@ function formatDateLocal(date: Date): string {
 
 export async function getChartData(daysBack: number = 365): Promise<ChartData> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   const defaultData: ChartData = {
     heatmap: { days: [], maxMinutes: 0, totalDays: daysBack, activeDays: 0 },

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { createActivity } from "./activities";
 import type {
   Setlist,
@@ -18,9 +18,7 @@ import type {
 // === Get all setlists (personal + band) ===
 export async function getSetlists(): Promise<SetlistWithDetails[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return [];
 
@@ -82,9 +80,7 @@ export async function getSetlist(
   setlistId: string
 ): Promise<SetlistWithDetails | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return null;
 
@@ -130,9 +126,7 @@ export async function createSetlist(
   input: CreateSetlistInput
 ): Promise<{ success: boolean; error?: string; setlist?: Setlist }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -184,9 +178,7 @@ export async function updateSetlist(
   input: UpdateSetlistInput
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -212,9 +204,7 @@ export async function deleteSetlist(
   setlistId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -239,9 +229,7 @@ export async function addSetlistItem(
   input: CreateSetlistItemInput
 ): Promise<{ success: boolean; error?: string; item?: SetlistItem }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -292,9 +280,7 @@ export async function updateSetlistItem(
   input: UpdateSetlistItemInput
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -327,9 +313,7 @@ export async function deleteSetlistItem(
   itemId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -370,9 +354,7 @@ export async function reorderSetlistItems(
   newPosition: number
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -418,9 +400,7 @@ export async function duplicateSetlist(
   newName?: string
 ): Promise<{ success: boolean; error?: string; setlist?: Setlist }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };

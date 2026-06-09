@@ -1,14 +1,12 @@
 import { getSetlists } from "@/lib/actions/setlists";
 import { getUserBands, getPendingBandInvitations } from "@/lib/actions/bands";
 import { getUpcomingRehearsals } from "@/lib/actions/rehearsals";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { SetlistsView } from "@/components/setlists/setlists-view";
 
 export default async function SetlistsPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return null;

@@ -1,14 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { createActivity } from "./activities";
 import { updateChallengeProgress } from "./challenges";
 import type { CreateSongInput, UpdateSongInput, Song, SongStatus } from "@/types";
 
 export async function getSongs(): Promise<Song[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -34,7 +34,7 @@ export async function getSongs(): Promise<Song[]> {
 
 export async function getSong(id: string): Promise<Song | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return null;
@@ -57,7 +57,7 @@ export async function getSong(id: string): Promise<Song | null> {
 
 export async function createSong(input: CreateSongInput): Promise<{ success: boolean; error?: string; song?: Song }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -115,7 +115,7 @@ export async function updateSong(
   input: UpdateSongInput
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -169,7 +169,7 @@ export async function updateSong(
 
 export async function deleteSong(id: string): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };

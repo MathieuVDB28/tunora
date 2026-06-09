@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { sendPushNotification, sendPushNotificationToMultipleUsers } from "@/lib/notifications";
 import type { NotificationPayload, NotificationType } from "@/lib/notifications";
 import type {
@@ -169,9 +169,7 @@ export async function createActivity(
   input: CreateActivityInput
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -309,9 +307,7 @@ export async function getFeedActivities(
   limit = 50
 ): Promise<ActivityWithDetails[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -614,9 +610,7 @@ export async function toggleReaction(
   emoji: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -669,9 +663,7 @@ export async function addComment(
   content: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -705,9 +697,7 @@ export async function deleteComment(
   commentId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -733,9 +723,7 @@ export async function getActivityComments(
   activityId: string
 ): Promise<ActivityCommentWithProfile[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -767,9 +755,7 @@ export async function getFriendRecentActivities(
   limit = 5
 ): Promise<ActivityWithDetails[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -822,9 +808,7 @@ export async function getCoverActivityData(
   currentUserId: string;
 } | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return null;
 

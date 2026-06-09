@@ -1,11 +1,11 @@
 import { getUserAlbumReviews } from "@/lib/actions/albums";
 import { getAlbumWishlist } from "@/lib/actions/album-wishlist";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { AlbumsView } from "@/components/albums/albums-view";
 
 export default async function AlbumsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   const { data: profile } = await supabase
     .from("profiles")

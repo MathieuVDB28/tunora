@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { createActivity } from "./activities";
 import { sendPushNotification } from "@/lib/notifications";
 import type {
@@ -49,9 +49,7 @@ export async function createChallenge(
   input: CreateChallengeInput
 ): Promise<{ success: boolean; error?: string; challenge?: Challenge }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -173,9 +171,7 @@ export async function acceptChallenge(
   challengeId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -247,9 +243,7 @@ export async function declineChallenge(
   challengeId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -300,9 +294,7 @@ export async function cancelChallenge(
   challengeId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -327,9 +319,7 @@ export async function cancelChallenge(
 // === Récupérer tous les challenges de l'utilisateur ===
 export async function getChallenges(): Promise<ChallengeWithDetails[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -400,9 +390,7 @@ export async function getChallenges(): Promise<ChallengeWithDetails[]> {
 // === Compter les invitations en attente ===
 export async function getPendingChallengesCount(): Promise<number> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return 0;
@@ -428,9 +416,7 @@ export async function updateChallengeProgress(
   songMasteredId?: string
 ): Promise<void> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return;
@@ -669,9 +655,7 @@ export async function getLeaderboard(
   period: LeaderboardPeriod = "week"
 ): Promise<LeaderboardEntry[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -697,9 +681,7 @@ export async function getActiveChallengeWithFriend(
   friendId: string
 ): Promise<ChallengeWithDetails | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return null;

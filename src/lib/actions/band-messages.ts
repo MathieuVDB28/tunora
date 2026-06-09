@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import type { BandMessageWithProfile } from "@/types";
 
 // === Get band messages (general chat or rehearsal thread) ===
@@ -11,7 +11,7 @@ export async function getBandMessages(
   offset: number = 0
 ): Promise<BandMessageWithProfile[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) return [];
 
   let query = supabase
@@ -47,7 +47,7 @@ export async function sendBandMessage(
   rehearsalId?: string | null
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) return { success: false, error: "Non authentifie" };
 
   // Verify band membership
@@ -82,7 +82,7 @@ export async function deleteBandMessage(
   messageId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) return { success: false, error: "Non authentifie" };
 
   const { error } = await supabase

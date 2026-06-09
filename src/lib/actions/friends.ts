@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { createActivity } from "./activities";
 import { sendPushNotification } from "@/lib/notifications";
 import type {
@@ -20,9 +20,7 @@ const FREE_PLAN_FRIENDS_LIMIT = 5;
 // === HELPER: Vérifier la limite d'amis pour le plan free ===
 async function canAddFriend(): Promise<{ allowed: boolean; reason?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { allowed: false, reason: "Non authentifié" };
@@ -58,9 +56,7 @@ async function canAddFriend(): Promise<{ allowed: boolean; reason?: string }> {
 // === Rechercher des utilisateurs par username ===
 export async function searchUsers(query: string): Promise<UserSearchResult[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user || !query.trim()) {
     return [];
@@ -112,9 +108,7 @@ export async function sendFriendRequest(
   addresseeId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -191,9 +185,7 @@ export async function acceptFriendRequest(
   friendshipId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -269,9 +261,7 @@ export async function rejectFriendRequest(
   friendshipId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -298,9 +288,7 @@ export async function removeFriend(
   friendshipId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -327,9 +315,7 @@ export async function blockUser(
   userId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -368,9 +354,7 @@ export async function blockUser(
 // === Récupérer la liste des amis ===
 export async function getFriends(): Promise<Friend[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -410,9 +394,7 @@ export async function getFriends(): Promise<Friend[]> {
 // === Récupérer les demandes en attente ===
 export async function getPendingRequests(): Promise<FriendRequest[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -446,9 +428,7 @@ export async function getPendingRequests(): Promise<FriendRequest[]> {
 // === Compter les demandes en attente (pour le badge) ===
 export async function getPendingRequestsCount(): Promise<number> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return 0;
@@ -471,9 +451,7 @@ export async function getPendingRequestsCount(): Promise<number> {
 // === Compter le nombre total d'amis acceptés ===
 export async function getFriendsCount(): Promise<number> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return 0;
@@ -498,9 +476,7 @@ export async function getFriendProfile(
   friendId: string
 ): Promise<FriendProfile | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return null;
@@ -568,9 +544,7 @@ export async function getFriendsLimitInfo(): Promise<{
   limit: number;
 } | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return null;

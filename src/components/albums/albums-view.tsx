@@ -23,13 +23,13 @@ export function AlbumsView({ initialReviews, initialWishlist, userPlan }: Albums
   const [activeTab, setActiveTab] = useState<"reviews" | "wishlist" | "recommendations">("reviews");
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [reviewFromWishlist, setReviewFromWishlist] = useState<AlbumWishlistItem | null>(null);
-  const [minStars, setMinStars] = useState(0);
+  const [starFilter, setStarFilter] = useState(0);
   const isPaid = userPlan !== "free";
 
-  // minStars is in half-stars (0 = all, 2 = ≥1★, 4 = ≥2★, …, 10 = 5★ exact)
-  const filteredReviews = minStars === 0
+  // starFilter: 0 = all, 1–5 = exact star bucket (e.g. 4 = ratings 4★ and 4.5★, db 8–9)
+  const filteredReviews = starFilter === 0
     ? reviews
-    : reviews.filter((r) => r.rating >= minStars);
+    : reviews.filter((r) => r.rating >= starFilter * 2 && r.rating < (starFilter + 1) * 2);
 
   const handleReviewAdded = (review: AlbumReview) => {
     setReviews((prev) => [review, ...prev]);
@@ -145,13 +145,12 @@ export function AlbumsView({ initialReviews, initialWishlist, userPlan }: Albums
         <>
           {reviews.length > 0 && (
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              {[0, 10, 8, 6, 4, 2].map((val) => {
-                const stars = val === 0 ? 0 : val / 2;
-                const isActive = minStars === val;
+              {[0, 5, 4, 3, 2, 1].map((val) => {
+                const isActive = starFilter === val;
                 return (
                   <button
                     key={val}
-                    onClick={() => setMinStars(val)}
+                    onClick={() => setStarFilter(val)}
                     className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
                       isActive
                         ? "border-amber-400 bg-amber-400/10 text-amber-500"
@@ -163,13 +162,13 @@ export function AlbumsView({ initialReviews, initialWishlist, userPlan }: Albums
                     ) : (
                       <>
                         <span className="material-symbols-outlined text-[14px] text-amber-400">star</span>
-                        {`≥ ${stars}`}
+                        {val}
                       </>
                     )}
                   </button>
                 );
               })}
-              {minStars > 0 && (
+              {starFilter > 0 && (
                 <span className="text-sm text-muted-foreground">
                   {filteredReviews.length} résultat{filteredReviews.length !== 1 ? "s" : ""}
                 </span>
@@ -193,7 +192,7 @@ export function AlbumsView({ initialReviews, initialWishlist, userPlan }: Albums
               <span className="material-symbols-outlined mb-3 text-4xl text-muted-foreground">filter_list</span>
               <p className="text-muted-foreground">Aucun album avec cette note</p>
               <button
-                onClick={() => setMinStars(0)}
+                onClick={() => setStarFilter(0)}
                 className="mt-3 text-sm text-primary hover:underline"
               >
                 Effacer le filtre

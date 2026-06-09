@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { sendPushNotificationToMultipleUsers } from "@/lib/notifications";
 import type {
   Rehearsal,
@@ -16,7 +16,7 @@ import type {
 // === Check band membership ===
 async function isBandMember(bandId: string): Promise<{ isMember: boolean; userId: string | null }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) return { isMember: false, userId: null };
 
   const { data: membership } = await supabase
@@ -32,7 +32,7 @@ async function isBandMember(bandId: string): Promise<{ isMember: boolean; userId
 // === Get band rehearsals ===
 export async function getBandRehearsals(bandId: string): Promise<RehearsalWithDetails[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) return [];
 
   const { data: rehearsals, error } = await supabase
@@ -61,7 +61,7 @@ export async function getBandRehearsals(bandId: string): Promise<RehearsalWithDe
 // === Get single rehearsal ===
 export async function getRehearsal(rehearsalId: string): Promise<RehearsalWithDetails | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) return null;
 
   const { data: rehearsal, error } = await supabase
@@ -99,7 +99,7 @@ export async function getRehearsal(rehearsalId: string): Promise<RehearsalWithDe
 // === Get user's upcoming rehearsals across all bands ===
 export async function getUpcomingRehearsals(): Promise<RehearsalWithDetails[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) return [];
 
   // Get all bands user is member of
@@ -319,7 +319,7 @@ export async function updateRehearsal(
   input: UpdateRehearsalInput
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) return { success: false, error: "Non authentifie" };
 
   // Get current rehearsal to check band membership
@@ -399,7 +399,7 @@ export async function deleteRehearsal(
   deleteAll: boolean = false
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) return { success: false, error: "Non authentifie" };
 
   if (deleteAll) {
@@ -445,7 +445,7 @@ export async function respondToRehearsal(
   status: RehearsalRsvpStatus
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) return { success: false, error: "Non authentifie" };
 
   const { error } = await supabase
@@ -473,7 +473,7 @@ export async function addRehearsalParticipant(
   participantId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) return { success: false, error: "Non authentifie" };
 
   const { data: rehearsal } = await supabase
@@ -526,7 +526,7 @@ export async function removeRehearsalParticipant(
   participantId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) return { success: false, error: "Non authentifie" };
 
   const { error } = await supabase

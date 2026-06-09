@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { createActivity } from "./activities";
 import type {
   GearItem,
@@ -26,7 +26,7 @@ const FREE_PLAN_GEAR_WISHLIST_LIMIT = 10;
 
 export async function getGearItems(): Promise<GearItem[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -48,7 +48,7 @@ export async function getGearItems(): Promise<GearItem[]> {
 
 export async function getGearItem(id: string): Promise<GearItem | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return null;
@@ -75,7 +75,7 @@ export async function createGearItem(input: CreateGearItemInput): Promise<{
   gearItem?: GearItem;
 }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -138,7 +138,7 @@ export async function updateGearItem(
   input: UpdateGearItemInput
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -161,7 +161,7 @@ export async function updateGearItem(
 
 export async function deleteGearItem(id: string): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -184,7 +184,7 @@ export async function deleteGearItem(id: string): Promise<{ success: boolean; er
 
 export async function getGearItemsCount(): Promise<number> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return 0;
@@ -209,7 +209,7 @@ export async function getGearItemsCount(): Promise<number> {
 
 export async function getGearSetups(): Promise<GearSetupWithItems[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -248,7 +248,7 @@ export async function createGearSetup(input: CreateGearSetupInput): Promise<{
   setup?: GearSetupWithItems;
 }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -298,7 +298,7 @@ export async function updateGearSetup(
   input: UpdateGearSetupInput
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -321,7 +321,7 @@ export async function updateGearSetup(
 
 export async function deleteGearSetup(id: string): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -348,7 +348,7 @@ export async function addGearToSetup(
   role?: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -410,7 +410,7 @@ export async function removeGearFromSetup(
   gearId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -449,7 +449,7 @@ export async function removeGearFromSetup(
 
 export async function getGearWishlist(): Promise<GearWishlistItem[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -476,7 +476,7 @@ export async function addToGearWishlist(input: CreateGearWishlistItemInput): Pro
   item?: GearWishlistItem;
 }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -523,7 +523,7 @@ export async function addToGearWishlist(input: CreateGearWishlistItemInput): Pro
 
 export async function removeFromGearWishlist(id: string): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -550,7 +550,7 @@ export async function removeFromGearWishlist(id: string): Promise<{ success: boo
 
 export async function setFavoriteGear(input: SetFavoriteGearInput): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -592,7 +592,7 @@ export async function setFavoriteGear(input: SetFavoriteGearInput): Promise<{ su
 
 export async function removeFavoriteGear(position: number): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -621,7 +621,7 @@ export async function removeFavoriteGear(position: number): Promise<{ success: b
 
 export async function getCoverGear(coverId: string): Promise<CoverGear[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -651,7 +651,7 @@ export async function addGearToCover(
   gearId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -717,7 +717,7 @@ export async function removeGearFromCover(
   gearId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -757,7 +757,7 @@ export async function removeGearFromCover(
 
 export async function getSongGear(songId: string): Promise<GearItem[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -786,7 +786,7 @@ export async function addGearToSong(
   gearId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -841,7 +841,7 @@ export async function removeGearFromSong(
   gearId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -881,7 +881,7 @@ export async function removeGearFromSong(
 
 export async function getUserGearItems(userId: string): Promise<GearItem[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   // Si c'est le proprietaire, retourner tout
   if (user?.id === userId) {

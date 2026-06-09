@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { sendPushNotificationToMultipleUsers } from "@/lib/notifications";
 import type {
   JamSession,
@@ -14,9 +14,7 @@ import type {
 // === Check if user has Band plan ===
 async function hasBandPlan(): Promise<boolean> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return false;
 
@@ -35,9 +33,7 @@ export async function createJamSession(
   setlistId?: string
 ): Promise<{ success: boolean; error?: string; session?: JamSession }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -185,9 +181,7 @@ export async function getActiveJamSession(
   bandId: string
 ): Promise<JamSessionWithDetails | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return null;
 
@@ -247,9 +241,7 @@ export async function getJamSession(
   sessionId: string
 ): Promise<JamSessionWithDetails | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return null;
 
@@ -315,9 +307,7 @@ export async function joinJamSession(
   sessionId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -361,9 +351,7 @@ export async function leaveJamSession(
   sessionId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -399,9 +387,7 @@ export async function updateJamSessionState(
   }
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -455,9 +441,7 @@ export async function sendJamMessage(
   content: string
 ): Promise<{ success: boolean; error?: string; message?: JamSessionMessage }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { createClient as createServiceRoleClient } from "@supabase/supabase-js";
 import { createActivity } from "./activities";
 import { getRecommendations, getArtistId, getAlbumArtistIds } from "@/lib/services/spotify";
@@ -26,9 +26,7 @@ export async function createAlbumReview(
   input: CreateAlbumReviewInput
 ): Promise<{ success: boolean; error?: string; data?: AlbumReview }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -80,9 +78,7 @@ export async function createAlbumReview(
 // === Récupérer les reviews de l'utilisateur ===
 export async function getUserAlbumReviews(): Promise<AlbumReview[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return [];
 
@@ -106,9 +102,7 @@ export async function updateAlbumReview(
   input: UpdateAlbumReviewInput
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -138,9 +132,7 @@ export async function deleteAlbumReview(
   reviewId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -209,9 +201,7 @@ export async function getAlbumsCommunityStats(
 // === Review de l'utilisateur courant pour un album donné (par spotify_id) ===
 export async function getUserAlbumReviewBySpotifyId(spotifyId: string): Promise<AlbumReview | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return null;
 
@@ -233,9 +223,7 @@ export async function getAlbumRecommendations(): Promise<{
   data?: SpotifyRecommendation[];
 }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };

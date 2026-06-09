@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { getAudioFeatures, formatKeyName } from "@/lib/services/spotify";
 import { createClient as createServiceRoleClient } from "@supabase/supabase-js";
 import type { SpotifyConnectionStatus, SongAudioFeatures, UserPlan } from "@/types";
@@ -14,28 +14,18 @@ function getServiceRoleSupabase() {
 
 export async function getSpotifyConnectionStatus(): Promise<SpotifyConnectionStatus> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
-    console.log("[Spotify Status] No authenticated user");
     return { connected: false };
   }
 
-  console.log("[Spotify Status] User:", user.id);
-
   const adminSupabase = getServiceRoleSupabase();
-  const { data, error } = await adminSupabase
+  const { data } = await adminSupabase
     .from("profiles")
     .select("spotify_user_id, spotify_connected_at, spotify_access_token")
     .eq("id", user.id)
     .single();
-
-  console.log("[Spotify Status] Query result:", {
-    hasData: !!data,
-    hasToken: !!data?.spotify_access_token,
-    spotifyUserId: data?.spotify_user_id,
-    error: error?.message,
-  });
 
   if (!data?.spotify_access_token) {
     return { connected: false };
@@ -50,7 +40,7 @@ export async function getSpotifyConnectionStatus(): Promise<SpotifyConnectionSta
 
 export async function requirePaidPlan(): Promise<{ allowed: boolean; plan: UserPlan; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { allowed: false, plan: "free", error: "Non authentifié" };
@@ -74,7 +64,7 @@ export async function fetchAndCacheAudioFeatures(
   songId: string
 ): Promise<{ success: boolean; features?: SongAudioFeatures; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -155,7 +145,7 @@ export async function importSpotifyPlaylist(
   selectedTrackIds: string[]
 ): Promise<{ success: boolean; imported: number; skipped: number; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, imported: 0, skipped: 0, error: "Non authentifié" };

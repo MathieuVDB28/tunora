@@ -1,14 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { createActivity } from "@/lib/actions/activities";
 import type { AlbumWishlistItem, CreateAlbumWishlistInput } from "@/types";
 
 // === Récupérer la wishlist albums ===
 export async function getAlbumWishlist(): Promise<AlbumWishlistItem[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return [];
 
@@ -31,7 +31,7 @@ export async function addToAlbumWishlist(
   input: CreateAlbumWishlistInput
 ): Promise<{ success: boolean; error?: string; album?: AlbumWishlistItem }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -126,7 +126,7 @@ export async function removeFromAlbumWishlist(
   id: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };

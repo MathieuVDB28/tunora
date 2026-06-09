@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { getFriendsCount } from "@/lib/actions/friends";
 import { PushNotificationManager } from "@/components/pwa";
 import { SidebarWrapper } from "@/components/layout/sidebar-wrapper";
@@ -26,7 +26,7 @@ export default async function MainLayout({
   children: React.ReactNode;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     redirect("/login");

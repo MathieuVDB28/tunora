@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { getJamSession, getJamMessages, joinJamSession } from "@/lib/actions/jam-sessions";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { JamSessionView } from "@/components/jam";
 
 interface JamPageProps {
@@ -11,9 +11,7 @@ export default async function JamPage({ params }: JamPageProps) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
   if (!user) {
     redirect("/login");
   }

@@ -7,6 +7,12 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: "200mb",
     },
+    // Cache client-side navigation: pages are reused without a server round-trip
+    // for up to 30s (dynamic) or 5min (static) after the first visit
+    staleTimes: {
+      dynamic: 30,
+      static: 300,
+    },
   },
   images: {
     remotePatterns: [

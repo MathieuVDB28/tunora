@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { getAuthenticatedUser } from "@/lib/supabase/server";
 import { getSongs } from "@/lib/actions/songs";
 import { getExercises } from "@/lib/actions/exercises";
 import { getSongPracticeStats } from "@/lib/actions/practice";
@@ -11,27 +11,27 @@ export const metadata = {
 };
 
 export default async function PracticePage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return null;
   }
 
-  // Charger les données en parallèle
   const [songs, exercises] = await Promise.all([
     getSongs(),
     getExercises(),
   ]);
 
-  // Charger les stats de pratique pour chaque morceau
-  const songPracticeStats: Record<string, SongPracticeStats> = {};
-  for (const song of songs) {
-    const stats = await getSongPracticeStats(song.id);
-    if (stats) {
-      songPracticeStats[song.id] = stats;
-    }
-  }
+  // Charger les stats de pratique de tous les morceaux en parallèle
+  const statsEntries = await Promise.all(
+    songs.map(async (song) => {
+      const stats = await getSongPracticeStats(song.id);
+      return stats ? [song.id, stats] as const : null;
+    })
+  );
+  const songPracticeStats: Record<string, SongPracticeStats> = Object.fromEntries(
+    statsEntries.filter((e): e is [string, SongPracticeStats] => e !== null)
+  );
 
   return (
     <PracticeView

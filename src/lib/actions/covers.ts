@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { createActivity } from "./activities";
 import type { Cover, CoverWithSong, CreateCoverInput, UpdateCoverInput } from "@/types";
 
@@ -9,7 +9,7 @@ const FREE_PLAN_COVER_LIMIT = 3;
 
 export async function getCovers(): Promise<CoverWithSong[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -34,7 +34,7 @@ export async function getCovers(): Promise<CoverWithSong[]> {
 
 export async function getCoversBySong(songId: string): Promise<Cover[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -62,7 +62,7 @@ export async function canUploadCover(): Promise<{
   current?: number
 }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { allowed: false, reason: "Non authentifié" };
@@ -103,7 +103,7 @@ export async function createCover(input: CreateCoverInput): Promise<{
   cover?: Cover
 }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -163,7 +163,7 @@ export async function updateCover(
   input: UpdateCoverInput
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -186,7 +186,7 @@ export async function updateCover(
 
 export async function deleteCover(id: string): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { createActivity } from "./activities";
 import type {
   Exercise,
@@ -22,7 +22,7 @@ export async function getExercises(filters?: {
   difficulty?: ExerciseDifficulty;
 }): Promise<ExerciseWithProgress[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -82,7 +82,7 @@ export async function getExercises(filters?: {
 
 export async function getExercise(id: string): Promise<ExerciseWithProgress | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return null;
@@ -126,7 +126,7 @@ export async function getUserExerciseProgress(
   exerciseId: string
 ): Promise<UserExercise | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return null;
@@ -151,7 +151,7 @@ export async function updateUserExerciseProgress(
   input: CreateUserExerciseProgressInput
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -217,7 +217,7 @@ export async function getExerciseStats(): Promise<{
   averageBpmImprovement: number;
 }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return {
@@ -306,7 +306,7 @@ export async function recordExerciseInSession(
   bpmAchieved?: number
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -335,7 +335,7 @@ export async function getRecentlyPracticedExercises(
   limit = 5
 ): Promise<ExerciseWithProgress[]> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return [];
@@ -381,7 +381,7 @@ export async function createExercise(
   input: CreateExerciseInput
 ): Promise<{ success: boolean; error?: string; exercise?: Exercise }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -434,7 +434,7 @@ export async function toggleShareExercise(
   exerciseId: string
 ): Promise<{ success: boolean; shared?: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -497,7 +497,7 @@ export async function deleteExercise(
   exerciseId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };

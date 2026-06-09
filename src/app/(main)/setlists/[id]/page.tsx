@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { getSetlist } from "@/lib/actions/setlists";
 import { getBandMembersSongs } from "@/lib/actions/bands";
 import { getSongs } from "@/lib/actions/songs";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { SetlistDetailView } from "@/components/setlists/setlist-detail-view";
 import type { UserPlan } from "@/types";
 
@@ -19,9 +19,7 @@ export default async function SetlistPage({ params }: SetlistPageProps) {
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     redirect("/login");

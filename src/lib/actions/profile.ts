@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import type {
   UserProfile,
   PublicProfile,
@@ -28,7 +28,7 @@ import type {
  */
 export async function uploadAvatar(formData: FormData): Promise<{ success: boolean; url?: string; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -106,7 +106,7 @@ export async function uploadAvatar(formData: FormData): Promise<{ success: boole
  */
 export async function getMyProfile(): Promise<UserProfile | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return null;
 
@@ -195,7 +195,7 @@ export async function getMyProfile(): Promise<UserProfile | null> {
  */
 export async function getPublicProfile(userId: string): Promise<PublicProfile | null> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   // Récupérer le profil de base
   const { data: profile } = await supabase
@@ -474,7 +474,7 @@ export async function getPublicProfile(userId: string): Promise<PublicProfile | 
  */
 export async function updateProfile(input: UpdateProfileInput): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -507,7 +507,7 @@ export async function updateProfile(input: UpdateProfileInput): Promise<{ succes
  */
 export async function setFavoriteSong(input: SetFavoriteSongInput): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -552,7 +552,7 @@ export async function setFavoriteSong(input: SetFavoriteSongInput): Promise<{ su
  */
 export async function removeFavoriteSong(position: number): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -580,7 +580,7 @@ export async function removeFavoriteSong(position: number): Promise<{ success: b
  */
 export async function setFavoriteAlbum(input: SetFavoriteAlbumInput): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };
@@ -612,7 +612,7 @@ export async function setFavoriteAlbum(input: SetFavoriteAlbumInput): Promise<{ 
  */
 export async function removeFavoriteAlbum(position: number): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifié" };

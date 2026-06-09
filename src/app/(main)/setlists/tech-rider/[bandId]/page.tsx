@@ -1,6 +1,6 @@
 import { getBand } from "@/lib/actions/bands";
 import { getTechRider } from "@/lib/actions/tech-riders";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { TechRiderView } from "@/components/tech-rider/tech-rider-view";
 
@@ -11,9 +11,7 @@ interface Props {
 export default async function TechRiderPage({ params }: Props) {
   const { bandId } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) redirect("/login");
 

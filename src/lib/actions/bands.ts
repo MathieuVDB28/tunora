@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import { createActivity } from "./activities";
 import { sendPushNotification } from "@/lib/notifications";
 import type {
@@ -18,9 +18,7 @@ import type {
 // === Check if user has Band plan ===
 async function hasBandPlan(): Promise<boolean> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return false;
 
@@ -36,9 +34,7 @@ async function hasBandPlan(): Promise<boolean> {
 // === Get user's bands ===
 export async function getUserBands(): Promise<BandWithMembers[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return [];
 
@@ -78,9 +74,7 @@ export async function getUserBands(): Promise<BandWithMembers[]> {
 // === Get a single band ===
 export async function getBand(bandId: string): Promise<BandWithMembers | null> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return null;
 
@@ -112,9 +106,7 @@ export async function createBand(
   input: CreateBandInput
 ): Promise<{ success: boolean; error?: string; band?: Band }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -175,9 +167,7 @@ export async function updateBand(
   input: UpdateBandInput
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -203,9 +193,7 @@ export async function deleteBand(
   bandId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -232,9 +220,7 @@ export async function inviteToBand(
   inviteeId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -322,9 +308,7 @@ export async function acceptBandInvitation(
   invitationId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -379,9 +363,7 @@ export async function declineBandInvitation(
   invitationId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -407,9 +389,7 @@ export async function getPendingBandInvitations(): Promise<
   BandInvitationWithDetails[]
 > {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return [];
 
@@ -444,9 +424,7 @@ export async function leaveBand(
   bandId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -488,9 +466,7 @@ export async function removeBandMember(
   memberId: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) {
     return { success: false, error: "Non authentifie" };
@@ -534,9 +510,7 @@ export async function getBandMembersSongs(
   bandId: string
 ): Promise<{ member: Profile; songs: Song[] }[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user) return [];
 
@@ -576,9 +550,7 @@ export async function searchUsersForBandInvite(
   bandId: string
 ): Promise<Profile[]> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthenticatedUser();
 
   if (!user || query.length < 2) return [];
 
